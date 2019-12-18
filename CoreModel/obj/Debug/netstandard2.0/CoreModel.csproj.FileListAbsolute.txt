@@ -1,0 +1,8 @@
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\bin\Debug\netstandard2.0\CoreModel.deps.json
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\bin\Debug\netstandard2.0\CoreModel.dll
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\bin\Debug\netstandard2.0\CoreModel.pdb
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\bin\Debug\netstandard2.0\CoreModel.xml
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\CoreModel.AssemblyInfoInputs.cache
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\CoreModel.AssemblyInfo.cs
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\CoreModel.dll
+C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\CoreModel.pdb

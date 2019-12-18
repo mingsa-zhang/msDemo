@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CoreDemo1</name>
+    </assembly>
+    <members>
+        <member name="T:CoreDemo1.Controllers.StudentController">
+            <summary>
+            学生类
+            </summary>
+        </member>
+        <member name="M:CoreDemo1.Controllers.StudentController.SetStident(CoreModel.StudentModel)">
+            <summary>
+            提交学生信息
+            </summary>
+            <param name="student"></param>
+            <returns></returns>
+        </member>
+        <member name="T:CoreDemo1.Controllers.WeatherForecastController">
+            <summary>
+            天气类
+            </summary>
+        </member>
+        <member name="M:CoreDemo1.Controllers.WeatherForecastController.Get">
+            <summary>
+            获取随机温度
+            </summary>
+            <returns></returns>
+        </member>
+    </members>
+</doc>
