@@ -6,3 +6,11 @@ C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\Co
 C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\CoreModel.AssemblyInfo.cs
 C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\CoreModel.dll
 C:\Users\13400\Desktop\.net core\CoreDemo1\CoreModel\obj\Debug\netstandard2.0\CoreModel.pdb
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.csproj.AssemblyReference.cache
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.GeneratedMSBuildEditorConfig.editorconfig
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.AssemblyInfoInputs.cache
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.AssemblyInfo.cs
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.csproj.CoreCompileInputs.cache
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.sourcelink.json
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.dll
+D:\张三\Demo\CoreModel\obj\Debug\netstandard2.0\CoreModel.pdb

@@ -1,36 +1,36 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\13400\\Desktop\\.net core\\CoreDemo1\\CoreModel\\CoreModel.csproj": {}
+    "D:\\张三\\Demo\\CoreModel\\CoreModel.csproj": {}
   },
   "projects": {
-    "C:\\Users\\13400\\Desktop\\.net core\\CoreDemo1\\CoreModel\\CoreModel.csproj": {
+    "D:\\张三\\Demo\\CoreModel\\CoreModel.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\13400\\Desktop\\.net core\\CoreDemo1\\CoreModel\\CoreModel.csproj",
+        "projectUniqueName": "D:\\张三\\Demo\\CoreModel\\CoreModel.csproj",
         "projectName": "CoreModel",
-        "projectPath": "C:\\Users\\13400\\Desktop\\.net core\\CoreDemo1\\CoreModel\\CoreModel.csproj",
-        "packagesPath": "C:\\Users\\13400\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\13400\\Desktop\\.net core\\CoreDemo1\\CoreModel\\obj\\",
+        "projectPath": "D:\\张三\\Demo\\CoreModel\\CoreModel.csproj",
+        "packagesPath": "C:\\Users\\p\\.nuget\\packages\\",
+        "outputPath": "D:\\张三\\Demo\\CoreModel\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "D:\\Microsoft\\Xamarin\\NuGet\\",
-          "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\13400\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+          "C:\\Users\\p\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
           "netstandard2.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "https://nuget.cnblogs.com/v3/index.json": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
             "projectReferences": {}
           }
         },
@@ -38,10 +38,17 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
           "dependencies": {
             "NETStandard.Library": {
               "suppressParent": "All",
@@ -56,11 +63,12 @@
             "net47",
             "net471",
             "net472",
-            "net48"
+            "net48",
+            "net481"
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203\\RuntimeIdentifierGraph.json"
         }
       }
     }

@@ -102,3 +102,13 @@ C:\Users\13400\Desktop\.net core\CoreDemo1\CoreDemo1\bin\Debug\netcoreapp3.0\zh-
 C:\Users\13400\Desktop\.net core\CoreDemo1\CoreDemo1\bin\Debug\netcoreapp3.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.resources.dll
 C:\Users\13400\Desktop\.net core\CoreDemo1\CoreDemo1\bin\Debug\netcoreapp3.0\CoreModel.pdb
 C:\Users\13400\Desktop\.net core\CoreDemo1\CoreDemo1\bin\Debug\netcoreapp3.0\CoreModel.xml
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.csproj.AssemblyReference.cache
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.GeneratedMSBuildEditorConfig.editorconfig
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.AssemblyInfoInputs.cache
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.AssemblyInfo.cs
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.csproj.CoreCompileInputs.cache
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.MvcApplicationPartsAssemblyInfo.cs
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.MvcApplicationPartsAssemblyInfo.cache
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.sourcelink.json
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.dll
+D:\张三\Demo\CoreDemo1\obj\Debug\netcoreapp3.0\CoreDemo1.pdb

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "nq7luG85bM8=",
+  "success": true,
+  "projectFilePath": "D:\\张三\\Demo\\CoreModel\\CoreModel.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\p\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\p\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
