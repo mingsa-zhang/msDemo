@@ -1,0 +1,74 @@
+<Window x:Class="DbManager.Wpf.Views.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="SQL执行历史" Height="500" Width="600"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="#FAFAFA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 标题栏 -->
+        <Border Grid.Row="0" Background="#F0F0F0" BorderBrush="#D8D8D8" BorderThickness="0,0,0,1" Padding="14,10">
+            <DockPanel>
+                <materialDesign:PackIcon Kind="History" Width="20" Height="20" Foreground="#555" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="SQL执行历史" FontSize="14" FontWeight="Medium" Foreground="#333" VerticalAlignment="Center"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding HistoryCount, StringFormat='共 {0} 条'}" FontSize="11" Foreground="#888" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- 历史列表 -->
+        <DataGrid Grid.Row="1" ItemsSource="{Binding Histories}" SelectedItem="{Binding SelectedHistory}"
+                  IsReadOnly="True" AutoGenerateColumns="False"
+                  GridLinesVisibility="All" AlternatingRowBackground="#F8F8F8"
+                  BorderThickness="0" FontSize="12"
+                  RowHeaderWidth="0" Margin="8">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="时间" Binding="{Binding ExecuteTime, StringFormat='{}{0:MM-dd HH:mm:ss}'}" Width="100"/>
+                <DataGridTextColumn Header="连接" Binding="{Binding ConnectionName}" Width="80"/>
+                <DataGridTextColumn Header="数据库" Binding="{Binding DatabaseName}" Width="80"/>
+                <DataGridTextColumn Header="SQL" Binding="{Binding SqlText}">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextWrapping" Value="NoWrap"/>
+                            <Setter Property="MaxHeight" Value="50"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="耗时" Binding="{Binding ExecutionTimeMs, StringFormat='{}{0}ms'}" Width="60"/>
+                <DataGridTemplateColumn Header="状态" Width="50">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Ellipse Width="10" Height="10">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSuccess}" Value="False">
+                                                <Setter Property="Fill" Value="#F44336"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- 底部按钮 -->
+        <Border Grid.Row="2" Padding="12,10" Background="#F0F0F0" BorderBrush="#D8D8D8" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="使用此SQL" Command="{Binding UseSqlCommand}" MinWidth="100" Margin="0,0,10,0" Padding="10,6" FontSize="12"/>
+                <Button Content="清空全部" Command="{Binding ClearAllCommand}" MinWidth="80" Margin="0,0,10,0" Padding="10,6" FontSize="12"/>
+                <Button Content="关闭" Command="{Binding CloseCommand}" MinWidth="80" Padding="10,6" FontSize="12"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

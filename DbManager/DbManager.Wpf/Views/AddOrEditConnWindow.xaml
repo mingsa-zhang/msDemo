@@ -1,0 +1,356 @@
+<Window x:Class="DbManager.Wpf.Views.AddOrEditConnWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="{Binding WindowTitle}" Height="540" Width="560"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="#FAFAFA">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部标题栏 - Navicat风格简洁标题 -->
+        <Border Grid.Row="0" Background="#F0F0F0" BorderBrush="#D8D8D8" BorderThickness="0,0,0,1" Padding="14,10">
+            <DockPanel>
+                <materialDesign:PackIcon Kind="DatabasePlus" Width="20" Height="20"
+                                         Foreground="#555" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock Text="{Binding WindowTitle}" FontSize="14" FontWeight="Medium"
+                           Foreground="#333" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- 标签页表单区 -->
+        <TabControl Grid.Row="1" Margin="16,10,16,0" Padding="0" FontSize="12">
+
+            <!-- ===== 常规标签页 ===== -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="4,2">
+                        <materialDesign:PackIcon Kind="FormTextbox" Width="14" Height="14"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="常规" VerticalAlignment="Center" FontSize="12"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <StackPanel>
+
+                        <!-- 连接名称 -->
+                        <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,4,0,8">
+                            <StackPanel Margin="10,8">
+                                <TextBlock Text="连接名称" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding Connection.Name, UpdateSourceTrigger=PropertyChanged}"
+                                         FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 数据库类型 -->
+                        <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,12">
+                            <StackPanel Margin="10,8">
+                                <TextBlock Text="数据库类型" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding DbTypeList}"
+                                          SelectedItem="{Binding Connection.DbType}"
+                                          FontSize="13" Padding="4,3"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ===== 关系型数据库参数 ===== -->
+                        <StackPanel Visibility="{Binding IsRelational, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <!-- 主机+端口 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <Grid Margin="10,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Margin="0,0,0,0">
+                                        <TextBlock Text="主机" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Host, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="端口" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Port, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <!-- 用户名 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="用户名" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.UserName, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                            <!-- 密码 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="密码" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <PasswordBox Name="PasswordBox" FontSize="13" Padding="4,3"/>
+                                </StackPanel>
+                            </Border>
+                            <!-- 数据库 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="数据库" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.DbName, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- ===== SQLite 参数 ===== -->
+                        <StackPanel Visibility="{Binding IsSQLite, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="数据库文件路径" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.SqliteFilePath, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- ===== Oracle 参数 ===== -->
+                        <StackPanel Visibility="{Binding IsOracle, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <Grid Margin="10,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="主机" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Host, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="端口" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Port, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="用户名" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.UserName, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="密码" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <PasswordBox Name="OraclePasswordBox" FontSize="13" Padding="4,3"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="Service Name" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.OracleServiceName, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- ===== MongoDB 参数 ===== -->
+                        <StackPanel Visibility="{Binding IsMongoDB, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <Grid Margin="10,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="主机" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Host, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="端口" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Port, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="用户名" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.UserName, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="密码" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <PasswordBox Name="MongoPasswordBox" FontSize="13" Padding="4,3"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="认证数据库" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.MongoAuthDb, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="数据库" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.DbName, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- ===== Redis 参数 ===== -->
+                        <StackPanel Visibility="{Binding IsRedis, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <Grid Margin="10,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="主机" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Host, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="端口" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.Port, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="密码（可选）" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <PasswordBox Name="RedisPasswordBox" FontSize="13" Padding="4,3"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ===== 高级标签页 ===== -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="4,2">
+                        <materialDesign:PackIcon Kind="TuneVariant" Width="14" Height="14"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="高级" VerticalAlignment="Center" FontSize="12"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <StackPanel>
+                        <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,4,0,8">
+                            <StackPanel Margin="10,8">
+                                <TextBlock Text="连接超时（秒）" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding Connection.ConnectTimeout, UpdateSourceTrigger=PropertyChanged}"
+                                         FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                            <StackPanel Margin="10,8">
+                                <TextBlock Text="备注说明" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding Connection.Description, UpdateSourceTrigger=PropertyChanged}"
+                                         FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"
+                                         AcceptsReturn="True" Height="80"
+                                         VerticalScrollBarVisibility="Auto"
+                                         VerticalContentAlignment="Top"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ===== SSL标签页 ===== -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="4,2">
+                        <materialDesign:PackIcon Kind="LockOutline" Width="14" Height="14"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="SSL" VerticalAlignment="Center" FontSize="12"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <StackPanel>
+                        <CheckBox Content="启用SSL加密连接" IsChecked="{Binding Connection.EnableSSL}"
+                                  Margin="8,8,0,8" FontSize="13"/>
+                        <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                            <StackPanel Margin="8,6" IsEnabled="{Binding Connection.EnableSSL}">
+                                <TextBlock Text="SSL证书路径" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding Connection.SslCertPath, UpdateSourceTrigger=PropertyChanged}"
+                                         FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- 底部按钮区 - Navicat风格 -->
+        <Border Grid.Row="2" Padding="12,10" Background="#F0F0F0" BorderBrush="#D8D8D8" BorderThickness="0,1,0,0">
+            <DockPanel>
+                <!-- 测试结果 -->
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,20,0">
+                    <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,6,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="#999"/>
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Setter Property="Fill" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsTestSuccess}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Setter Property="Fill" Value="#F44336"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding TestResult}" VerticalAlignment="Center" FontWeight="Medium" FontSize="12">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Setter Property="Foreground" Value="#333"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsTestSuccess}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Setter Property="Foreground" Value="#4CAF50"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsTestSuccess}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Setter Property="Foreground" Value="#F44336"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- 按钮组 -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="测试连接" Command="{Binding TestConnectionCommand}"
+                            MinWidth="100" Margin="0,0,10,0" Padding="10,6" FontSize="12"/>
+                    <Button Content="确定" Command="{Binding SaveCommand}"
+                            MinWidth="80" Margin="0,0,10,0" Padding="10,6" FontSize="12"/>
+                    <Button Content="取消" Command="{Binding CancelCommand}"
+                            MinWidth="80" Padding="10,6" FontSize="12"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

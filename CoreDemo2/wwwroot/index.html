@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符串转义/反转义工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .input-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .input-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-escape {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-escape:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-unescape {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-unescape:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .btn-clear {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .output-section {
+            margin-top: 30px;
+        }
+
+        .output-textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #f8f9fa;
+            resize: vertical;
+            read-only: true;
+        }
+
+        .output-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .loading::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .char-count {
+            text-align: right;
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">字符串转义/反转义工具</h1>
+
+        <div class="input-section">
+            <label class="input-label">输入字符串:</label>
+            <textarea
+                id="inputText"
+                class="input-textarea"
+                placeholder="请输入需要处理的字符串..."
+            ></textarea>
+            <div class="char-count" id="inputCount">0 字符</div>
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-escape" onclick="escapeString()">转义</button>
+            <button class="btn btn-unescape" onclick="unescapeString()">反转义</button>
+            <button class="btn btn-clear" onclick="clearAll()">清空</button>
+        </div>
+
+        <div class="loading" id="loading">处理中</div>
+
+        <div class="status" id="status"></div>
+
+        <div class="output-section">
+            <label class="input-label">处理结果:</label>
+            <textarea
+                id="outputText"
+                class="output-textarea"
+                placeholder="处理结果将显示在这里..."
+                readonly
+            ></textarea>
+            <div class="char-count" id="outputCount">0 字符</div>
+        </div>
+    </div>
+
+    <script>
+        // 更新字符计数
+        function updateCharCount() {
+            const inputText = document.getElementById('inputText');
+            const outputText = document.getElementById('outputText');
+            const inputCount = document.getElementById('inputCount');
+            const outputCount = document.getElementById('outputCount');
+
+            inputCount.textContent = `${inputText.value.length} 字符`;
+            outputCount.textContent = `${outputText.value.length} 字符`;
+        }
+
+        // 显示状态消息
+        function showStatus(message, isSuccess) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${isSuccess ? 'success' : 'error'}`;
+            status.style.display = 'block';
+
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        // 显示/隐藏加载状态
+        function setLoading(isLoading) {
+            const loading = document.getElementById('loading');
+            loading.style.display = isLoading ? 'block' : 'none';
+        }
+
+        // 转义字符串
+        async function escapeString() {
+            const inputText = document.getElementById('inputText').value;
+
+            if (!inputText.trim()) {
+                showStatus('请输入要转义的字符串', false);
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const response = await fetch('/api/StringEscape/escape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: inputText })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('outputText').value = result.output;
+                    updateCharCount();
+                    showStatus(result.message || '转义成功', true);
+                } else {
+                    showStatus(result.message || '转义失败', false);
+                }
+            } catch (error) {
+                showStatus('网络错误，请检查连接', false);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // 反转义字符串
+        async function unescapeString() {
+            const inputText = document.getElementById('inputText').value;
+
+            if (!inputText.trim()) {
+                showStatus('请输入要反转义的字符串', false);
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const response = await fetch('/api/StringEscape/unescape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ input: inputText })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('outputText').value = result.output;
+                    updateCharCount();
+                    showStatus(result.message || '反转义成功', true);
+                } else {
+                    showStatus(result.message || '反转义失败', false);
+                }
+            } catch (error) {
+                showStatus('网络错误，请检查连接', false);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // 清空所有内容
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('outputText').value = '';
+            updateCharCount();
+            showStatus('已清空所有内容', true);
+        }
+
+        // 监听输入变化，更新字符计数
+        document.getElementById('inputText').addEventListener('input', updateCharCount);
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCharCount();
+        });
+
+        // 支持快捷键操作
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'Enter':
+                        e.preventDefault();
+                        escapeString();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        unescapeString();
+                        break;
+                    case 'Delete':
+                    case 'Backspace':
+                        if (e.shiftKey) {
+                            e.preventDefault();
+                            clearAll();
+                        }
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

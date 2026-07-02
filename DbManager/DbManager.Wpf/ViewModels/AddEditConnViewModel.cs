@@ -1,0 +1,143 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using DbManager.Common;
+using DbManager.Core.Adapters;
+using DbManager.Core.Enums;
+using DbManager.Core.Models;
+using DbManager.Core.Services;
+using DbManager.Wpf.Helpers;
+using System.Collections.ObjectModel;
+using System.Windows;
+
+namespace DbManager.Wpf.ViewModels;
+
+public partial class AddEditConnViewModel : ObservableObject
+{
+    private readonly DbConnectionManageService _connectionService;
+
+    [ObservableProperty] private DbConnectionModel _connection;
+    [ObservableProperty] private string _windowTitle = "新建连接";
+    [ObservableProperty] private bool _isRelational = true;
+    [ObservableProperty] private bool _isSQLite;
+    [ObservableProperty] private bool _isOracle;
+    [ObservableProperty] private bool _isMongoDB;
+    [ObservableProperty] private bool _isRedis;
+    [ObservableProperty] private string _testResult = string.Empty;
+    [ObservableProperty] private bool? _isTestSuccess;
+
+    public ObservableCollection<DbTypeEnum> DbTypeList { get; } = new(Enum.GetValues<DbTypeEnum>());
+
+    public AddEditConnViewModel(DbConnectionManageService connectionService, DbConnectionModel connection)
+    {
+        _connectionService = connectionService;
+        _connection = connection;
+
+        if (connection.Id > 0)
+        {
+            WindowTitle = "编辑连接";
+        }
+
+        Connection.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(Connection.DbType))
+            {
+                UpdateDbTypeVisibility();
+                AutoFillDefaultPort();
+            }
+        };
+
+        UpdateDbTypeVisibility();
+    }
+
+    private void UpdateDbTypeVisibility()
+    {
+        IsRelational = Connection.DbType is DbTypeEnum.MySql or DbTypeEnum.MariaDB
+            or DbTypeEnum.SqlServer or DbTypeEnum.PostgreSQL or DbTypeEnum.DB2;
+        IsSQLite = Connection.DbType == DbTypeEnum.SQLite;
+        IsOracle = Connection.DbType == DbTypeEnum.Oracle;
+        IsMongoDB = Connection.DbType == DbTypeEnum.MongoDB;
+        IsRedis = Connection.DbType == DbTypeEnum.Redis;
+    }
+
+    private void AutoFillDefaultPort()
+    {
+        if (Connection.Port > 0) return;
+        Connection.Port = Connection.DbType switch
+        {
+            DbTypeEnum.MySql or DbTypeEnum.MariaDB => AppConst.DefaultMySqlPort,
+            DbTypeEnum.SqlServer => AppConst.DefaultSqlServerPort,
+            DbTypeEnum.PostgreSQL => AppConst.DefaultPostgreSqlPort,
+            DbTypeEnum.Oracle => AppConst.DefaultOraclePort,
+            DbTypeEnum.MongoDB => AppConst.DefaultMongoDbPort,
+            DbTypeEnum.Redis => AppConst.DefaultRedisPort,
+            DbTypeEnum.DB2 => AppConst.DefaultDb2Port,
+            _ => 0
+        };
+    }
+
+    [RelayCommand]
+    private async Task TestConnection()
+    {
+        try
+        {
+            var connStr = DbConnStringBuilder.BuildDecryptedConnectionString(Connection);
+            var service = App.MetadataFactory.Create(Connection.DbType);
+            var databases = await service.GetDatabasesAsync(connStr);
+            TestResult = $"连接成功，发现 {databases.Count} 个数据库";
+            IsTestSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            TestResult = $"连接失败: {ex.Message}";
+            IsTestSuccess = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(Connection.Name))
+        {
+            MessageTipHelper.Warning("请输入连接名称");
+            return;
+        }
+
+        try
+        {
+            if (Connection.Id > 0)
+            {
+                await _connectionService.UpdateConnectionAsync(Connection);
+            }
+            else
+            {
+                Connection.CreatedTime = DateTime.Now;
+                await _connectionService.AddConnectionAsync(Connection);
+            }
+
+            CloseWindow();
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"保存失败: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        CloseWindow();
+    }
+
+    private void CloseWindow()
+    {
+        foreach (Window window in Application.Current.Windows)
+        {
+            if (window.DataContext == this)
+            {
+                window.DialogResult = true;
+                window.Close();
+                return;
+            }
+        }
+    }
+}

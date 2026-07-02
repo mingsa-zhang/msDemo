@@ -1,0 +1,186 @@
+<UserControl x:Class="DbManager.Wpf.Views.SqlQueryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+             xmlns:helpers="clr-namespace:DbManager.Wpf.Helpers">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="3"/>
+            <RowDefinition Height="200"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 工具栏 - Navicat风格紧凑图标 -->
+        <Border Grid.Row="0" Background="#FAFAFA" BorderBrush="#DCDCDC" BorderThickness="0,0,0,1" Padding="4,2">
+            <StackPanel Orientation="Horizontal">
+                <!-- 运行组 -->
+                <Button ToolTip="运行 (F5)" Command="{Binding ExecuteCommand}" Padding="6,3" Margin="1,0"
+                        Style="{StaticResource ToolBarButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Play" Width="16" Height="16" Foreground="#4CAF50" VerticalAlignment="Center"/>
+                        <TextBlock Text="运行" Margin="4,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button ToolTip="运行选中 (Ctrl+F5)" Command="{Binding ExecuteSelectedCommand}" Padding="6,3" Margin="1,0"
+                        Style="{StaticResource ToolBarButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="PlayOutline" Width="16" Height="16" Foreground="#2196F3" VerticalAlignment="Center"/>
+                        <TextBlock Text="运行选中" Margin="4,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button ToolTip="停止" Command="{Binding StopExecutionCommand}" Padding="6,3" Margin="1,0"
+                        Style="{StaticResource ToolBarButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Stop" Width="16" Height="16" Foreground="#F44336" VerticalAlignment="Center"/>
+                        <TextBlock Text="停止" Margin="4,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Separator Margin="4,2"/>
+                <!-- 文件组 -->
+                <Button ToolTip="保存脚本" Command="{Binding SaveScriptCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="ContentSaveOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+                <Button ToolTip="打开脚本" Command="{Binding OpenScriptCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="FolderOpenOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+                <Separator Margin="4,2"/>
+                <!-- 编辑组 -->
+                <Button ToolTip="格式化SQL" Command="{Binding FormatSqlCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="CodeTags" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+                <Button ToolTip="清空" Command="{Binding ClearCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="EraserVariant" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+                <Separator Margin="4,2"/>
+                <!-- 查找组 -->
+                <Button ToolTip="查找替换 (Ctrl+F)" Click="FindReplace_Click" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="FindReplace" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+                <Separator Margin="4,2"/>
+                <!-- 历史记录 -->
+                <Button ToolTip="执行历史" Command="{Binding ShowHistoryCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="History" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- SQL编辑器 -->
+        <Border Grid.Row="1" BorderBrush="#DCDCDC" BorderThickness="0,0,0,1">
+            <avalonEdit:TextEditor x:Name="SqlEditor"
+                                    FontFamily="Consolas" FontSize="13"
+                                    ShowLineNumbers="True"
+                                    WordWrap="False"
+                                    Background="White" Foreground="#333"
+                                    BorderThickness="0"
+                                    helpers:AvalonEditHelper.Text="{Binding SqlText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"/>
+        </Border>
+
+        <!-- 分割条 -->
+        <GridSplitter Grid.Row="2" Height="3" HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                      Background="#DCDCDC" Cursor="SizeNS"/>
+
+        <!-- 结果区域 -->
+        <Grid Grid.Row="3">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 结果标签页头 -->
+            <TabControl Grid.Row="0" Grid.RowSpan="2" FontSize="11" Padding="0">
+                <!-- 结果集标签页 -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Margin="6,3">
+                            <materialDesign:PackIcon Kind="Table" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="结果" VerticalAlignment="Center" FontSize="11.5"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <DataGrid ItemsSource="{Binding ResultDataView}"
+                              IsReadOnly="True"
+                              SelectionMode="Extended"
+                              GridLinesVisibility="All"
+                              HeadersVisibility="Column"
+                              AlternatingRowBackground="#F8F8F8"
+                              BorderThickness="0"
+                              FontSize="12"
+                              AutoGenerateColumns="True"
+                              CanUserAddRows="False"
+                              RowHeaderWidth="0"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling"/>
+                </TabItem>
+
+                <!-- 消息标签页 -->
+                <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal" Margin="6,3">
+                            <materialDesign:PackIcon Kind="MessageTextOutline" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock Text="消息" VerticalAlignment="Center" FontSize="11.5"/>
+                        </StackPanel>
+                    </TabItem.Header>
+                    <TextBox Text="{Binding MessageText, Mode=OneWay}"
+                             IsReadOnly="True" FontFamily="Consolas" FontSize="12"
+                             Background="White"
+                             BorderThickness="0" Padding="8"
+                             VerticalScrollBarVisibility="Auto"
+                             TextWrapping="Wrap"/>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <!-- 底部状态栏 -->
+        <Border Grid.Row="4" Background="#F0F0F0" BorderBrush="#DCDCDC" BorderThickness="0,1,0,0" Padding="8,3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="TimerOutline" Width="13" Height="13"
+                                             VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
+                    <TextBlock Text="{Binding ExecutionTimeMs, StringFormat='{}{0} ms'}" FontSize="11"
+                               VerticalAlignment="Center" Foreground="#888"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
+                    <materialDesign:PackIcon Kind="TableRow" Width="13" Height="13"
+                                             VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
+                    <TextBlock Text="{Binding AffectedRows, StringFormat='{}{0} 行受影响'}" FontSize="11"
+                               VerticalAlignment="Center" Foreground="#888"/>
+                </StackPanel>
+                <StackPanel Grid.Column="3" Orientation="Horizontal">
+                    <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,4,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Fill" Value="#4CAF50"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsExecuting}" Value="True">
+                                        <Setter Property="Fill" Value="#FF9800"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock FontSize="11" VerticalAlignment="Center" Foreground="#888">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="就绪"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsExecuting}" Value="True">
+                                        <Setter Property="Text" Value="执行中..."/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

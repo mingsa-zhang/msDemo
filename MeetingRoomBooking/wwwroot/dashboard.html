@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会议室管理后台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar h1 {
+            font-size: 24px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-right button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #f0f0f0;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .section-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-cancelled { background: #e2e3e5; color: #383d41; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stat-card h4 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🏢 会议室预约管理系统</h1>
+        <div class="nav-right">
+            <span id="userInfo"></span>
+            <button onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs" id="mainTabs">
+            <button class="tab-btn active" onclick="switchMainTab('rooms')">会议室列表</button>
+            <button class="tab-btn" onclick="switchMainTab('my-bookings')">我的预约</button>
+            <button class="tab-btn admin-only" onclick="switchMainTab('pending-approvals')">待审批</button>
+            <button class="tab-btn admin-only" onclick="switchMainTab('all-bookings')">所有预约</button>
+            <button class="tab-btn admin-only" onclick="switchMainTab('statistics')">数据统计</button>
+        </div>
+
+        <div id="roomsTab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 class="section-title">会议室列表</h2>
+                <button class="btn btn-primary admin-only" onclick="showAddRoomModal()">新增会议室</button>
+            </div>
+            <div id="roomsList"></div>
+        </div>
+
+        <div id="myBookingsTab" class="tab-content hidden">
+            <h2 class="section-title">我的预约</h2>
+            <div id="myBookingsList"></div>
+        </div>
+
+        <div id="pendingApprovalsTab" class="tab-content hidden">
+            <h2 class="section-title">待审批预约</h2>
+            <div id="pendingList"></div>
+        </div>
+
+        <div id="allBookingsTab" class="tab-content hidden">
+            <h2 class="section-title">所有预约</h2>
+            <div id="allBookingsList"></div>
+        </div>
+
+        <div id="statisticsTab" class="tab-content hidden">
+            <h2 class="section-title">数据统计</h2>
+            <div id="statisticsContent"></div>
+        </div>
+    </div>
+
+    <!-- 新增会议室模态框 -->
+    <div id="addRoomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">新增会议室</div>
+            <form onsubmit="addRoom(event)">
+                <div class="form-group">
+                    <label>会议室名称 *</label>
+                    <input type="text" id="roomName" required>
+                </div>
+                <div class="form-group">
+                    <label>位置</label>
+                    <input type="text" id="roomLocation">
+                </div>
+                <div class="form-group">
+                    <label>容量 *</label>
+                    <input type="number" id="roomCapacity" required min="1">
+                </div>
+                <div class="form-group">
+                    <label>设备</label>
+                    <input type="text" id="roomEquipment" placeholder="如：投影仪、白板">
+                </div>
+                <div class="form-group">
+                    <label>可预约开始时间</label>
+                    <input type="time" id="roomAvailableFrom">
+                </div>
+                <div class="form-group">
+                    <label>可预约结束时间</label>
+                    <input type="time" id="roomAvailableTo">
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn" onclick="closeModal('addRoomModal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 预约会议室模态框 -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">预约会议室</div>
+            <form onsubmit="createBooking(event)">
+                <input type="hidden" id="bookingRoomId">
+                <div class="form-group">
+                    <label>会议室</label>
+                    <input type="text" id="bookingRoomName" readonly>
+                </div>
+                <div class="form-group">
+                    <label>会议主题 *</label>
+                    <input type="text" id="bookingTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>开始时间 *</label>
+                    <input type="datetime-local" id="bookingStartTime" required>
+                </div>
+                <div class="form-group">
+                    <label>结束时间 *</label>
+                    <input type="datetime-local" id="bookingEndTime" required>
+                </div>
+                <div class="form-group">
+                    <label>参会人数</label>
+                    <input type="number" id="bookingAttendeeCount" min="1">
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea id="bookingDescription"></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">提交预约</button>
+                    <button type="button" class="btn" onclick="closeModal('bookingModal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

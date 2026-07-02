@@ -1,7 +1,53 @@
-﻿################################################################################
-# 此 .gitignore 文件已由 Microsoft(R) Visual Studio 自动创建。
+################################################################################
+# .NET / Visual Studio .gitignore
 ################################################################################
 
-/.vs
-/.gitignore
-/.gitignore
+# Visual Studio 临时/用户文件
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# 生成输出目录
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+[Xx]64/
+[Xx]86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+build/
+bld/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# NuGet
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# 测试 / 覆盖率结果
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+
+# 常见临时文件
+*.log
+*.tmp
+*.cache
+_ReSharper*/
+*.DotSettings.user
+
+# 操作系统生成文件
+.DS_Store
+Thumbs.db

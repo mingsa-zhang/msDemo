@@ -1,0 +1,6 @@
+@CoreDemo3_HostAddress = http://localhost:5007
+
+GET {{CoreDemo3_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
