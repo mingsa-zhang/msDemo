@@ -142,7 +142,7 @@ public partial class DataBrowserViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"加载失败: {ex.Message}";
+            StatusMessage = $"加载失败: {DbErrorTranslator.Translate(ex)}";
         }
         finally
         {

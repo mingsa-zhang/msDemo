@@ -66,16 +66,21 @@ public partial class ConnListViewModel : ObservableObject
     private async Task TestConnection()
     {
         if (SelectedConnection == null) return;
+        if (!DbManager.Core.Enums.DbTypeSupport.IsImplemented(SelectedConnection.DbType))
+        {
+            Helpers.MessageTipHelper.Warning($"{SelectedConnection.DbType} 尚在开发中，暂不支持连接。");
+            return;
+        }
         try
         {
-            var connStr = DbManager.Core.Adapters.DbConnStringBuilder.BuildConnectionString(SelectedConnection);
+            var connStr = DbManager.Core.Adapters.DbConnStringBuilder.BuildDecryptedConnectionString(SelectedConnection);
             var service = App.MetadataFactory.Create(SelectedConnection.DbType);
             var databases = await service.GetDatabasesAsync(connStr);
             Helpers.MessageTipHelper.Success($"连接成功，发现 {databases.Count} 个数据库");
         }
         catch (Exception ex)
         {
-            Helpers.MessageTipHelper.Error($"连接失败: {ex.Message}");
+            Helpers.MessageTipHelper.Error($"连接失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}");
         }
     }
 

@@ -118,7 +118,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
             {
                 ResultTabs = new ObservableCollection<QueryResultTab>();
                 ResultDataView = null;
-                MessageText = $"错误: {result.ErrorMessage}";
+                MessageText = $"错误: {DbManager.Common.DbErrorTranslator.Translate(result.ErrorMessage)}";
                 IsSuccess = false;
                 history.IsSuccess = false;
             }
@@ -140,7 +140,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
             ExecutionTimeMs = stopwatch.ElapsedMilliseconds;
             ResultTabs = new ObservableCollection<QueryResultTab>();
             ResultDataView = null;
-            MessageText = $"错误: {ex.Message}";
+            MessageText = $"错误: {DbManager.Common.DbErrorTranslator.Translate(ex)}";
             IsSuccess = false;
             history.IsSuccess = false;
             history.ExecutionTimeMs = ExecutionTimeMs;

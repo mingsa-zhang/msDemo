@@ -102,7 +102,7 @@ public partial class AddEditConnViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            TestResult = $"连接失败: {ex.Message}";
+            TestResult = $"连接失败: {DbErrorTranslator.Translate(ex)}";
             IsTestSuccess = false;
         }
     }
