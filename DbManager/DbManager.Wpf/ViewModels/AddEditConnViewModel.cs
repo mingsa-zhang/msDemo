@@ -22,6 +22,8 @@ public partial class AddEditConnViewModel : ObservableObject
     [ObservableProperty] private bool _isOracle;
     [ObservableProperty] private bool _isMongoDB;
     [ObservableProperty] private bool _isRedis;
+    [ObservableProperty] private bool _isDbTypeSupported = true;
+    [ObservableProperty] private string _unsupportedHint = string.Empty;
     [ObservableProperty] private string _testResult = string.Empty;
     [ObservableProperty] private bool? _isTestSuccess;
 
@@ -57,6 +59,11 @@ public partial class AddEditConnViewModel : ObservableObject
         IsOracle = Connection.DbType == DbTypeEnum.Oracle;
         IsMongoDB = Connection.DbType == DbTypeEnum.MongoDB;
         IsRedis = Connection.DbType == DbTypeEnum.Redis;
+
+        IsDbTypeSupported = DbTypeSupport.IsImplemented(Connection.DbType);
+        UnsupportedHint = IsDbTypeSupported
+            ? string.Empty
+            : $"{Connection.DbType} 尚在开发中，暂不支持连接，敬请期待。";
     }
 
     private void AutoFillDefaultPort()
@@ -78,6 +85,13 @@ public partial class AddEditConnViewModel : ObservableObject
     [RelayCommand]
     private async Task TestConnection()
     {
+        if (!DbTypeSupport.IsImplemented(Connection.DbType))
+        {
+            TestResult = UnsupportedHint;
+            IsTestSuccess = false;
+            return;
+        }
+
         try
         {
             var connStr = DbConnStringBuilder.BuildDecryptedConnectionString(Connection);
@@ -99,6 +113,12 @@ public partial class AddEditConnViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(Connection.Name))
         {
             MessageTipHelper.Warning("请输入连接名称");
+            return;
+        }
+
+        if (!DbTypeSupport.IsImplemented(Connection.DbType))
+        {
+            MessageTipHelper.Warning(UnsupportedHint);
             return;
         }
 

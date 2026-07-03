@@ -8,4 +8,24 @@ public partial class DataBrowserView : UserControl
     {
         InitializeComponent();
     }
+
+    /// <summary>
+    /// 行号：把 1 基序号写入行头。
+    /// </summary>
+    private void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
+    {
+        e.Row.Header = (e.Row.GetIndex() + 1).ToString();
+    }
+
+    /// <summary>
+    /// "复制为"按钮：左键点击即展开其下拉菜单。
+    /// </summary>
+    private void CopyAsButton_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.ContextMenu is { } menu)
+        {
+            menu.PlacementTarget = btn;
+            menu.IsOpen = true;
+        }
+    }
 }

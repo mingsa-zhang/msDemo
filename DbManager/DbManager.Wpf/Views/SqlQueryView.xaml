@@ -55,6 +55,15 @@
                 <Button ToolTip="清空" Command="{Binding ClearCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="EraserVariant" Width="16" Height="16" VerticalAlignment="Center"/>
                 </Button>
+                <Button ToolTip="注释/取消注释 (Ctrl+/)" Click="ToggleComment_Click" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="CommentOutline" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+                <Button ToolTip="转大写 (Ctrl+Shift+U)" Click="UpperCase_Click" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="FormatLetterCaseUpper" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
+                <Button ToolTip="转小写 (Ctrl+Shift+L)" Click="LowerCase_Click" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="FormatLetterCaseLower" Width="16" Height="16" VerticalAlignment="Center"/>
+                </Button>
                 <Separator Margin="4,2"/>
                 <!-- 查找组 -->
                 <Button ToolTip="查找替换 (Ctrl+F)" Click="FindReplace_Click" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
@@ -100,19 +109,35 @@
                             <TextBlock Text="结果" VerticalAlignment="Center" FontSize="11.5"/>
                         </StackPanel>
                     </TabItem.Header>
-                    <DataGrid ItemsSource="{Binding ResultDataView}"
-                              IsReadOnly="True"
-                              SelectionMode="Extended"
-                              GridLinesVisibility="All"
-                              HeadersVisibility="Column"
-                              AlternatingRowBackground="#F8F8F8"
-                              BorderThickness="0"
-                              FontSize="12"
-                              AutoGenerateColumns="True"
-                              CanUserAddRows="False"
-                              RowHeaderWidth="0"
-                              VirtualizingPanel.IsVirtualizing="True"
-                              VirtualizingPanel.VirtualizationMode="Recycling"/>
+                    <!-- 多结果集：每个结果集一个子标签 -->
+                    <TabControl ItemsSource="{Binding ResultTabs}" FontSize="11" Padding="0" BorderThickness="0">
+                        <TabControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="4,2">
+                                    <TextBlock Text="{Binding Header}" VerticalAlignment="Center" FontSize="11"/>
+                                    <TextBlock Text="{Binding RowCount, StringFormat=' ({0})'}" VerticalAlignment="Center"
+                                               FontSize="10" Foreground="#999"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </TabControl.ItemTemplate>
+                        <TabControl.ContentTemplate>
+                            <DataTemplate>
+                                <DataGrid ItemsSource="{Binding DataView}"
+                                          IsReadOnly="True"
+                                          SelectionMode="Extended"
+                                          GridLinesVisibility="All"
+                                          HeadersVisibility="Column"
+                                          AlternatingRowBackground="#F8F8F8"
+                                          BorderThickness="0"
+                                          FontSize="12"
+                                          AutoGenerateColumns="True"
+                                          CanUserAddRows="False"
+                                          RowHeaderWidth="0"
+                                          VirtualizingPanel.IsVirtualizing="True"
+                                          VirtualizingPanel.VirtualizationMode="Recycling"/>
+                            </DataTemplate>
+                        </TabControl.ContentTemplate>
+                    </TabControl>
                 </TabItem>
 
                 <!-- 消息标签页 -->

@@ -6,6 +6,7 @@ using DbManager.Core.Models;
 using DbManager.Core.Services;
 using DbManager.Wpf.Helpers;
 using DbManager.Wpf.Views;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Diagnostics;
 
@@ -28,6 +29,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
     [ObservableProperty] private string _messageText = string.Empty;
     [ObservableProperty] private bool _isSuccess = true;
     [ObservableProperty] private DataView? _resultDataView;
+    [ObservableProperty] private ObservableCollection<QueryResultTab> _resultTabs = new();
     [ObservableProperty] private string _currentFilePath = string.Empty;
 
     public DbConnectionModel Connection => _connection;
@@ -82,27 +84,39 @@ public partial class SqlQueryTabViewModel : ObservableObject
             ExecutionTimeMs = stopwatch.ElapsedMilliseconds;
             history.ExecutionTimeMs = ExecutionTimeMs;
 
-            if (result.IsSuccess && result.ResultSets.Count > 0 && result.ResultSets[0].Rows.Count > 0)
+            if (result.IsSuccess)
             {
-                var table = ConvertToDataTable(result.ResultSets[0]);
-                ResultDataView = table.DefaultView;
-                AffectedRows = result.ResultSets[0].Rows.Count;
-                MessageText = $"查询完成，{AffectedRows} 行，耗时 {ExecutionTimeMs} ms";
-                IsSuccess = true;
-                history.IsSuccess = true;
-                history.AffectedRows = AffectedRows;
-            }
-            else if (result.IsSuccess)
-            {
-                ResultDataView = null;
-                AffectedRows = result.AffectedRows;
-                MessageText = $"执行成功，影响 {AffectedRows} 行，耗时 {ExecutionTimeMs} ms";
+                // 仅含列的结果集才作为数据标签展示；无列的为非查询语句（增删改）。
+                var dataSets = result.ResultSets.Where(rs => rs.Columns.Count > 0).ToList();
+                ResultTabs = new ObservableCollection<QueryResultTab>(
+                    dataSets.Select((rs, i) => new QueryResultTab
+                    {
+                        Header = dataSets.Count > 1 ? $"结果 {i + 1}" : "结果",
+                        DataView = ConvertToDataTable(rs).DefaultView,
+                        RowCount = rs.Rows.Count
+                    }));
+                // 兼容旧的单结果集绑定
+                ResultDataView = ResultTabs.Count > 0 ? ResultTabs[0].DataView : null;
+
+                if (dataSets.Count > 0)
+                {
+                    AffectedRows = dataSets.Sum(d => d.Rows.Count);
+                    MessageText = dataSets.Count > 1
+                        ? $"查询完成，{dataSets.Count} 个结果集，共 {AffectedRows} 行，耗时 {ExecutionTimeMs} ms"
+                        : $"查询完成，{AffectedRows} 行，耗时 {ExecutionTimeMs} ms";
+                }
+                else
+                {
+                    AffectedRows = result.AffectedRows;
+                    MessageText = $"执行成功，影响 {AffectedRows} 行，耗时 {ExecutionTimeMs} ms";
+                }
                 IsSuccess = true;
                 history.IsSuccess = true;
                 history.AffectedRows = AffectedRows;
             }
             else
             {
+                ResultTabs = new ObservableCollection<QueryResultTab>();
                 ResultDataView = null;
                 MessageText = $"错误: {result.ErrorMessage}";
                 IsSuccess = false;
@@ -113,6 +127,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
         {
             stopwatch.Stop();
             ExecutionTimeMs = stopwatch.ElapsedMilliseconds;
+            ResultTabs = new ObservableCollection<QueryResultTab>();
             ResultDataView = null;
             MessageText = "查询已被取消";
             IsSuccess = true;
@@ -123,6 +138,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
         {
             stopwatch.Stop();
             ExecutionTimeMs = stopwatch.ElapsedMilliseconds;
+            ResultTabs = new ObservableCollection<QueryResultTab>();
             ResultDataView = null;
             MessageText = $"错误: {ex.Message}";
             IsSuccess = false;
@@ -149,6 +165,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
     private void Clear()
     {
         SqlText = string.Empty;
+        ResultTabs = new ObservableCollection<QueryResultTab>();
         ResultDataView = null;
         MessageText = string.Empty;
         AffectedRows = 0;
@@ -228,26 +245,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(SqlText)) return;
 
-        // 简单格式化：关键字大写
-        var keywords = new[] { "SELECT", "FROM", "WHERE", "AND", "OR", "ORDER", "BY", "GROUP", "HAVING",
-            "INSERT", "UPDATE", "DELETE", "INTO", "VALUES", "SET", "JOIN", "LEFT", "RIGHT", "INNER", "ON",
-            "CREATE", "TABLE", "ALTER", "DROP", "INDEX", "PRIMARY", "KEY", "FOREIGN", "REFERENCES",
-            "NOT", "NULL", "DEFAULT", "AUTO_INCREMENT", "IDENTITY", "LIKE", "IN", "BETWEEN", "IS",
-            "AS", "DISTINCT", "COUNT", "SUM", "AVG", "MAX", "MIN", "CASE", "WHEN", "THEN", "ELSE", "END",
-            "UNION", "ALL", "EXCEPT", "INTERSECT", "LIMIT", "OFFSET", "FETCH", "FIRST", "NEXT", "ROWS",
-            "BEGIN", "COMMIT", "ROLLBACK", "TRANSACTION", "EXEC", "EXECUTE", "PROCEDURE", "FUNCTION" };
-
-        var result = SqlText;
-        foreach (var kw in keywords)
-        {
-            result = System.Text.RegularExpressions.Regex.Replace(
-                result,
-                $@"\b{kw.ToLowerInvariant()}\b",
-                kw,
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        }
-
-        SqlText = result;
+        SqlText = SqlFormatter.Format(SqlText);
     }
 
     private static DataTable ConvertToDataTable(QueryResultSet resultSet)
@@ -264,4 +262,25 @@ public partial class SqlQueryTabViewModel : ObservableObject
         }
         return table;
     }
+}
+
+/// <summary>
+/// 单个结果集标签（多语句执行时每个查询结果一个）。
+/// </summary>
+public class QueryResultTab
+{
+    /// <summary>
+    /// 标签标题
+    /// </summary>
+    public string Header { get; set; } = "结果";
+
+    /// <summary>
+    /// 结果数据视图
+    /// </summary>
+    public DataView? DataView { get; set; }
+
+    /// <summary>
+    /// 行数
+    /// </summary>
+    public int RowCount { get; set; }
 }

@@ -57,6 +57,18 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- 未实现类型提示横幅 -->
+                        <Border Background="#FFF3E0" BorderBrush="#FFB74D" BorderThickness="1" CornerRadius="4"
+                                Margin="0,0,0,12" Padding="10,8"
+                                Visibility="{Binding IsDbTypeSupported, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <DockPanel>
+                                <materialDesign:PackIcon Kind="AlertOutline" Width="16" Height="16"
+                                                         Foreground="#F57C00" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="{Binding UnsupportedHint}" Foreground="#E65100"
+                                           FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                            </DockPanel>
+                        </Border>
+
                         <!-- ===== 关系型数据库参数 ===== -->
                         <StackPanel Visibility="{Binding IsRelational, Converter={StaticResource BoolToVisibilityConverter}}">
                             <!-- 主机+端口 -->

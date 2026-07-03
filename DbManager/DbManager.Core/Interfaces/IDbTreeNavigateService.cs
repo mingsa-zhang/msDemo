@@ -6,12 +6,18 @@ public interface IDbTreeNavigateService
 {
     Task<List<DbTreeNodeModel>> GetConnectionNodesAsync();
     Task<List<DbTreeNodeModel>> GetDatabaseNodesAsync(int connectionId);
-    Task<List<DbTreeNodeModel>> GetTableNodesAsync(int connectionId, string database);
-    Task<List<DbTreeNodeModel>> GetViewNodesAsync(int connectionId, string database);
-    Task<List<DbTreeNodeModel>> GetColumnNodesAsync(int connectionId, string database, string tableName);
-    Task<List<DbTreeNodeModel>> GetStoredProcedureNodesAsync(int connectionId, string database);
-    Task<List<DbTreeNodeModel>> GetFunctionNodesAsync(int connectionId, string database);
-    Task<List<DbTreeNodeModel>> GetIndexNodesAsync(int connectionId, string database, string tableName);
+    Task<List<DbTreeNodeModel>> GetSchemaNodesAsync(int connectionId, string database);
+    Task<List<DbTreeNodeModel>> GetTableNodesAsync(int connectionId, string database, string? schema = null);
+    Task<List<DbTreeNodeModel>> GetViewNodesAsync(int connectionId, string database, string? schema = null);
+    Task<List<DbTreeNodeModel>> GetColumnNodesAsync(int connectionId, string database, string tableName, string? schema = null);
+    Task<List<DbTreeNodeModel>> GetStoredProcedureNodesAsync(int connectionId, string database, string? schema = null);
+    Task<List<DbTreeNodeModel>> GetFunctionNodesAsync(int connectionId, string database, string? schema = null);
+    Task<List<DbTreeNodeModel>> GetIndexNodesAsync(int connectionId, string database, string tableName, string? schema = null);
+
+    /// <summary>
+    /// 失效指定连接下的元数据缓存（单节点刷新时调用，确保重新查库）。
+    /// </summary>
+    void InvalidateConnection(int connectionId);
 }
 
 public enum TreeNodeType
@@ -19,6 +25,7 @@ public enum TreeNodeType
     Group,
     Connection,
     Database,
+    Schema,
     TableGroup,
     ViewGroup,
     ProcedureGroup,

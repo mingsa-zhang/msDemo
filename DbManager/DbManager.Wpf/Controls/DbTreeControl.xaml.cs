@@ -6,6 +6,7 @@ using DbManager.Core.Adapters;
 using DbManager.Core.Enums;
 using DbManager.Core.Interfaces;
 using DbManager.Core.Models;
+using DbManager.Core.Services;
 using DbManager.Wpf.ViewModels;
 
 namespace DbManager.Wpf.Controls;
@@ -52,6 +53,7 @@ public partial class DbTreeControl : UserControl
             TreeNodeType.Group => "GroupMenu",
             TreeNodeType.Connection => "ConnectionMenu",
             TreeNodeType.Database => "DatabaseMenu",
+            TreeNodeType.Schema => "GroupMenu",
             TreeNodeType.Table => "TableMenu",
             TreeNodeType.View => "ViewMenu",
             TreeNodeType.Procedure => "ProcedureMenu",
@@ -93,7 +95,7 @@ public partial class DbTreeControl : UserControl
         {
             case TreeNodeType.Table:
             case TreeNodeType.View:
-                ViewModel?.RequestOpenDataBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
+                ViewModel?.RequestOpenDataBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "", node.SchemaName);
                 break;
             case TreeNodeType.Database:
                 ViewModel?.RequestOpenSqlQuery(node.ConnectionId, node.DatabaseName ?? "");
@@ -154,13 +156,13 @@ public partial class DbTreeControl : UserControl
     private void Menu_ViewData(object sender, RoutedEventArgs e)
     {
         if (GetClickedNode(sender) is { } node)
-            ViewModel?.RequestOpenDataBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
+            ViewModel?.RequestOpenDataBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "", node.SchemaName);
     }
 
     private void Menu_DesignTable(object sender, RoutedEventArgs e)
     {
         if (GetClickedNode(sender) is { } node)
-            ViewModel?.RequestOpenTableDesign(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
+            ViewModel?.RequestOpenTableDesign(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "", node.SchemaName);
     }
 
     private void Menu_CopyName(object sender, RoutedEventArgs e)
@@ -175,6 +177,8 @@ public partial class DbTreeControl : UserControl
     {
         if (GetClickedNode(sender) is { } node)
         {
+            // 先失效该连接的元数据缓存，确保刷新是真正重新查库
+            ViewModel?.InvalidateConnectionCache(node.ConnectionId);
             node.IsLoaded = false;
             node.Children.Clear();
             _ = node.LoadChildrenAsync();
@@ -195,14 +199,12 @@ public partial class DbTreeControl : UserControl
             if (conn == null) return;
             var executeService = App.ExecuteFactory.Create(conn.DbType);
             var connStr = DbConnStringBuilder.BuildDecryptedConnectionString(conn);
-            var sql = conn.DbType switch
-            {
-                DbTypeEnum.MySql or DbTypeEnum.MariaDB => $"TRUNCATE TABLE `{node.DatabaseName}`.`{node.ObjectName}`",
-                DbTypeEnum.SqlServer => $"TRUNCATE TABLE [{node.DatabaseName}].[dbo].[{node.ObjectName}]",
-                DbTypeEnum.PostgreSQL => $"TRUNCATE TABLE public.{node.ObjectName}",
-                DbTypeEnum.SQLite => $"DELETE FROM \"{node.ObjectName}\"",
-                _ => $"TRUNCATE TABLE {node.ObjectName}"
-            };
+            var dialect = DialectProvider.GetDialect(conn.DbType);
+            var qualifiedTable = dialect.QualifyTable(node.DatabaseName, node.SchemaName, node.ObjectName ?? "");
+            // SQLite 不支持 TRUNCATE，用 DELETE 代替
+            var sql = conn.DbType == DbTypeEnum.SQLite
+                ? $"DELETE FROM {qualifiedTable}"
+                : $"TRUNCATE TABLE {qualifiedTable}";
             var execResult = await executeService.ExecuteQueryAsync(connStr, sql);
             if (execResult.IsSuccess)
                 MessageBox.Show("截断成功", "提示", MessageBoxButton.OK, MessageBoxImage.Information);

@@ -78,6 +78,27 @@
                             Style="{StaticResource ToolBarButton}">
                         <materialDesign:PackIcon Kind="CodeTags" Width="14" Height="14" Foreground="#FF9800"/>
                     </Button>
+                    <Button ToolTip="导出JSON" Command="{Binding ExportJsonCommand}" Padding="6,3" Margin="1,0"
+                            Style="{StaticResource ToolBarButton}">
+                        <materialDesign:PackIcon Kind="CodeJson" Width="14" Height="14" Foreground="#607D8B"/>
+                    </Button>
+                    <Separator Margin="4,2"/>
+                    <!-- 复制为 -->
+                    <Button ToolTip="复制为…" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}"
+                            Click="CopyAsButton_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentCopy" Width="14" Height="14" VerticalAlignment="Center"/>
+                            <materialDesign:PackIcon Kind="MenuDown" Width="12" Height="12" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="复制为 INSERT" Command="{Binding CopyAsInsertCommand}"/>
+                                <MenuItem Header="复制为 CSV" Command="{Binding CopyAsCsvCommand}"/>
+                                <MenuItem Header="复制为 Markdown" Command="{Binding CopyAsMarkdownCommand}"/>
+                                <MenuItem Header="复制为 JSON" Command="{Binding CopyAsJsonCommand}"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>
@@ -88,13 +109,14 @@
                   IsReadOnly="{Binding IsEditing, Converter={StaticResource InverseBoolConverter}}"
                   SelectionMode="Extended"
                   GridLinesVisibility="All"
-                  HeadersVisibility="Column"
+                  HeadersVisibility="All"
                   AlternatingRowBackground="#F8F8F8"
                   BorderThickness="0"
                   FontSize="12"
                   AutoGenerateColumns="True"
                   CanUserAddRows="False"
-                  RowHeaderWidth="0"
+                  RowHeaderWidth="42"
+                  LoadingRow="DataGrid_LoadingRow"
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"/>
 

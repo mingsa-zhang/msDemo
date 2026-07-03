@@ -9,12 +9,24 @@ public class DbTreeNavigateService : IDbTreeNavigateService
 {
     private readonly DbConnectionManageService _connectionService;
     private readonly DbMetadataServiceFactory _metadataFactory;
+    private readonly MetadataCache _cache = new();
 
     public DbTreeNavigateService(DbConnectionManageService connectionService, DbMetadataServiceFactory metadataFactory)
     {
         _connectionService = connectionService;
         _metadataFactory = metadataFactory;
     }
+
+    /// <summary>
+    /// 组合缓存 key（连接号打头，便于按连接前缀失效）。
+    /// </summary>
+    private static string Key(int connectionId, string kind, string? database = null, string? schema = null, string? table = null)
+        => $"{connectionId}|{kind}|{database}|{schema}|{table}";
+
+    /// <summary>
+    /// 失效某连接下的全部元数据缓存（单节点刷新时调用）。
+    /// </summary>
+    public void InvalidateConnection(int connectionId) => _cache.InvalidateByPrefix($"{connectionId}|");
 
     public async Task<List<DbTreeNodeModel>> GetConnectionNodesAsync()
     {
@@ -36,7 +48,8 @@ public class DbTreeNavigateService : IDbTreeNavigateService
 
         var service = _metadataFactory.Create(conn.DbType);
         var connectionString = BuildDecryptedConnectionString(conn);
-        var databases = await service.GetDatabasesAsync(connectionString);
+        var databases = await _cache.GetOrAddAsync(Key(connectionId, "db"),
+            () => service.GetDatabasesAsync(connectionString));
 
         return databases.Select(db => new DbTreeNodeModel
         {
@@ -48,14 +61,37 @@ public class DbTreeNavigateService : IDbTreeNavigateService
         }).ToList();
     }
 
-    public async Task<List<DbTreeNodeModel>> GetTableNodesAsync(int connectionId, string database)
+    public async Task<List<DbTreeNodeModel>> GetSchemaNodesAsync(int connectionId, string database)
     {
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (conn == null) return new();
 
         var service = _metadataFactory.Create(conn.DbType);
         var connectionString = BuildDecryptedConnectionString(conn);
-        var tables = await service.GetTablesAsync(connectionString, database);
+        var schemas = await _cache.GetOrAddAsync(Key(connectionId, "schema", database),
+            () => service.GetSchemasAsync(connectionString, database));
+
+        return schemas.Select(s => new DbTreeNodeModel
+        {
+            DisplayName = s,
+            NodeType = TreeNodeType.Schema,
+            ConnectionId = connectionId,
+            DatabaseName = database,
+            SchemaName = s,
+            IconKind = "FolderTableOutline",
+            IconColor = "#795548"
+        }).ToList();
+    }
+
+    public async Task<List<DbTreeNodeModel>> GetTableNodesAsync(int connectionId, string database, string? schema = null)
+    {
+        var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
+        if (conn == null) return new();
+
+        var service = _metadataFactory.Create(conn.DbType);
+        var connectionString = BuildDecryptedConnectionString(conn);
+        var tables = await _cache.GetOrAddAsync(Key(connectionId, "tables", database, schema),
+            () => service.GetTablesAsync(connectionString, database, schema));
 
         return tables.Select(t => new DbTreeNodeModel
         {
@@ -63,19 +99,21 @@ public class DbTreeNavigateService : IDbTreeNavigateService
             NodeType = TreeNodeType.Table,
             ConnectionId = connectionId,
             DatabaseName = database,
+            SchemaName = schema,
             ObjectName = t,
             IconKind = "Table"
         }).ToList();
     }
 
-    public async Task<List<DbTreeNodeModel>> GetViewNodesAsync(int connectionId, string database)
+    public async Task<List<DbTreeNodeModel>> GetViewNodesAsync(int connectionId, string database, string? schema = null)
     {
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (conn == null) return new();
 
         var service = _metadataFactory.Create(conn.DbType);
         var connectionString = BuildDecryptedConnectionString(conn);
-        var views = await service.GetViewsAsync(connectionString, database);
+        var views = await _cache.GetOrAddAsync(Key(connectionId, "views", database, schema),
+            () => service.GetViewsAsync(connectionString, database, schema));
 
         return views.Select(v => new DbTreeNodeModel
         {
@@ -83,19 +121,21 @@ public class DbTreeNavigateService : IDbTreeNavigateService
             NodeType = TreeNodeType.View,
             ConnectionId = connectionId,
             DatabaseName = database,
+            SchemaName = schema,
             ObjectName = v,
             IconKind = "Eye"
         }).ToList();
     }
 
-    public async Task<List<DbTreeNodeModel>> GetColumnNodesAsync(int connectionId, string database, string tableName)
+    public async Task<List<DbTreeNodeModel>> GetColumnNodesAsync(int connectionId, string database, string tableName, string? schema = null)
     {
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (conn == null) return new();
 
         var service = _metadataFactory.Create(conn.DbType);
         var connectionString = BuildDecryptedConnectionString(conn);
-        var columns = await service.GetColumnsAsync(connectionString, database, tableName);
+        var columns = await _cache.GetOrAddAsync(Key(connectionId, "columns", database, schema, tableName),
+            () => service.GetColumnsAsync(connectionString, database, tableName, schema));
 
         return columns.Select(c => new DbTreeNodeModel
         {
@@ -103,19 +143,21 @@ public class DbTreeNavigateService : IDbTreeNavigateService
             NodeType = TreeNodeType.Column,
             ConnectionId = connectionId,
             DatabaseName = database,
+            SchemaName = schema,
             ObjectName = c.ColumnName,
             IconKind = c.IsPrimaryKey ? "Key" : "FormatText"
         }).ToList();
     }
 
-    public async Task<List<DbTreeNodeModel>> GetStoredProcedureNodesAsync(int connectionId, string database)
+    public async Task<List<DbTreeNodeModel>> GetStoredProcedureNodesAsync(int connectionId, string database, string? schema = null)
     {
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (conn == null) return new();
 
         var service = _metadataFactory.Create(conn.DbType);
         var connectionString = BuildDecryptedConnectionString(conn);
-        var procedures = await service.GetStoredProceduresAsync(connectionString, database);
+        var procedures = await _cache.GetOrAddAsync(Key(connectionId, "procs", database, schema),
+            () => service.GetStoredProceduresAsync(connectionString, database, schema));
 
         return procedures.Select(p => new DbTreeNodeModel
         {
@@ -123,19 +165,21 @@ public class DbTreeNavigateService : IDbTreeNavigateService
             NodeType = TreeNodeType.Procedure,
             ConnectionId = connectionId,
             DatabaseName = database,
+            SchemaName = schema,
             ObjectName = p,
             IconKind = "Cog"
         }).ToList();
     }
 
-    public async Task<List<DbTreeNodeModel>> GetFunctionNodesAsync(int connectionId, string database)
+    public async Task<List<DbTreeNodeModel>> GetFunctionNodesAsync(int connectionId, string database, string? schema = null)
     {
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (conn == null) return new();
 
         var service = _metadataFactory.Create(conn.DbType);
         var connectionString = BuildDecryptedConnectionString(conn);
-        var functions = await service.GetFunctionsAsync(connectionString, database);
+        var functions = await _cache.GetOrAddAsync(Key(connectionId, "funcs", database, schema),
+            () => service.GetFunctionsAsync(connectionString, database, schema));
 
         return functions.Select(f => new DbTreeNodeModel
         {
@@ -143,6 +187,7 @@ public class DbTreeNavigateService : IDbTreeNavigateService
             NodeType = TreeNodeType.Function,
             ConnectionId = connectionId,
             DatabaseName = database,
+            SchemaName = schema,
             ObjectName = f,
             IconKind = "Function"
         }).ToList();
@@ -180,14 +225,15 @@ public class DbTreeNavigateService : IDbTreeNavigateService
         _ => "#673AB7"
     };
 
-    public async Task<List<DbTreeNodeModel>> GetIndexNodesAsync(int connectionId, string database, string tableName)
+    public async Task<List<DbTreeNodeModel>> GetIndexNodesAsync(int connectionId, string database, string tableName, string? schema = null)
     {
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (conn == null) return new List<DbTreeNodeModel>();
 
         var metadataService = _metadataFactory.Create(conn.DbType);
         var connectionString = DbConnStringBuilder.BuildDecryptedConnectionString(conn);
-        var indexes = await metadataService.GetIndexesAsync(connectionString, database, tableName);
+        var indexes = await _cache.GetOrAddAsync(Key(connectionId, "indexes", database, schema, tableName),
+            () => metadataService.GetIndexesAsync(connectionString, database, tableName, schema));
 
         return indexes.Select(idx => new DbTreeNodeModel
         {
@@ -197,6 +243,7 @@ public class DbTreeNavigateService : IDbTreeNavigateService
             IconColor = "#FF9800",
             ConnectionId = connectionId,
             DatabaseName = database,
+            SchemaName = schema,
             TableName = tableName
         }).ToList();
     }

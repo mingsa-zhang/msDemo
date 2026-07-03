@@ -1,4 +1,3 @@
-using System.Data.Common;
 using System.Diagnostics;
 using DbManager.Core.Interfaces;
 using DbManager.Core.Models;
@@ -14,6 +13,8 @@ public class SqlServerMetadataService : IDbMetadataService
     {
         _connectionFactory = connectionFactory;
     }
+
+    private static string Sch(string? schema) => string.IsNullOrWhiteSpace(schema) ? "dbo" : schema;
 
     public async Task<List<string>> GetDatabasesAsync(string connectionString)
     {
@@ -35,15 +36,38 @@ public class SqlServerMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetTablesAsync(string connectionString, string database)
+    public async Task<List<string>> GetSchemasAsync(string connectionString, string database)
     {
         var result = new List<string>();
         try
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
-            var sql = $"SELECT TABLE_NAME FROM [{database}].INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'";
+            var sql = $"SELECT name FROM [{database}].sys.schemas WHERE name NOT IN ('guest','INFORMATION_SCHEMA','sys') AND name NOT LIKE 'db[_]%' ORDER BY name";
             using var cmd = new SqlCommand(sql, conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(reader.GetString(0));
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"SqlServer获取Schema列表失败: {ex.Message}");
+        }
+        return result;
+    }
+
+    public async Task<List<string>> GetTablesAsync(string connectionString, string database, string? schema = null)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = $"SELECT TABLE_NAME FROM [{database}].INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE' AND TABLE_SCHEMA=@schema";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -56,15 +80,16 @@ public class SqlServerMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetViewsAsync(string connectionString, string database)
+    public async Task<List<string>> GetViewsAsync(string connectionString, string database, string? schema = null)
     {
         var result = new List<string>();
         try
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
-            var sql = $"SELECT TABLE_NAME FROM [{database}].INFORMATION_SCHEMA.VIEWS";
+            var sql = $"SELECT TABLE_NAME FROM [{database}].INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA=@schema";
             using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -77,7 +102,7 @@ public class SqlServerMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName)
+    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         var result = new List<TableColumnModel>();
         try
@@ -99,11 +124,12 @@ public class SqlServerMetadataService : IDbMetadataService
                     FROM [{database}].INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
                     INNER JOIN [{database}].INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku ON tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
                     WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
-                ) pk ON c.COLUMN_NAME = pk.COLUMN_NAME AND c.TABLE_NAME = pk.TABLE_NAME
-                WHERE c.TABLE_NAME = @tableName
+                ) pk ON c.COLUMN_NAME = pk.COLUMN_NAME AND c.TABLE_NAME = pk.TABLE_NAME AND c.TABLE_SCHEMA = pk.TABLE_SCHEMA
+                WHERE c.TABLE_NAME = @tableName AND c.TABLE_SCHEMA = @schema
                 ORDER BY c.ORDINAL_POSITION";
             using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@tableName", tableName);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -125,15 +151,16 @@ public class SqlServerMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database)
+    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database, string? schema = null)
     {
         var result = new List<string>();
         try
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
-            var sql = $"SELECT ROUTINE_NAME FROM [{database}].INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE='PROCEDURE'";
+            var sql = $"SELECT ROUTINE_NAME FROM [{database}].INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE='PROCEDURE' AND ROUTINE_SCHEMA=@schema";
             using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -146,15 +173,16 @@ public class SqlServerMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database)
+    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database, string? schema = null)
     {
         var result = new List<string>();
         try
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
-            var sql = $"SELECT ROUTINE_NAME FROM [{database}].INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE='FUNCTION'";
+            var sql = $"SELECT ROUTINE_NAME FROM [{database}].INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE='FUNCTION' AND ROUTINE_SCHEMA=@schema";
             using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -167,16 +195,20 @@ public class SqlServerMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName)
+    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         var result = new List<string>();
         try
         {
             using var conn = new SqlConnection(connectionString);
             await conn.OpenAsync();
-            var sql = $"SELECT DISTINCT i.name FROM [{database}].sys.indexes i INNER JOIN [{database}].sys.tables t ON i.object_id=t.object_id WHERE t.name=@tableName";
+            var sql = $@"SELECT DISTINCT i.name FROM [{database}].sys.indexes i
+                        INNER JOIN [{database}].sys.tables t ON i.object_id=t.object_id
+                        INNER JOIN [{database}].sys.schemas s ON t.schema_id=s.schema_id
+                        WHERE t.name=@tableName AND s.name=@schema";
             using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@tableName", tableName);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {

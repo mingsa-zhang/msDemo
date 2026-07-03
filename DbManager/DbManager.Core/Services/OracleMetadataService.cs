@@ -1,4 +1,3 @@
-using System.Data.Common;
 using System.Diagnostics;
 using DbManager.Core.Interfaces;
 using DbManager.Core.Models;
@@ -27,6 +26,9 @@ public class OracleMetadataService : IDbMetadataService
         "APEX_030200", "APEX_040000", "APEX_040100", "APEX_040200", "APEX_050000",
         "SCOTT", "HR", "OE", "SH", "PM", "IX"
     };
+
+    // Oracle 的"数据库"节点本身即 Schema（OWNER=USERNAME），故不再单独提供 Schema 子层。
+    private static string Owner(string database, string? schema) => string.IsNullOrWhiteSpace(schema) ? database : schema;
 
     public async Task<List<string>> GetDatabasesAsync(string connectionString)
     {
@@ -73,7 +75,11 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<string>> GetTablesAsync(string connectionString, string database)
+    // Oracle 数据库层已等价于 Schema，返回空表示不再展开二级 Schema。
+    public Task<List<string>> GetSchemasAsync(string connectionString, string database)
+        => Task.FromResult(new List<string>());
+
+    public async Task<List<string>> GetTablesAsync(string connectionString, string database, string? schema = null)
     {
         try
         {
@@ -82,7 +88,7 @@ public class OracleMetadataService : IDbMetadataService
             await conn.OpenAsync();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT TABLE_NAME FROM ALL_TABLES WHERE OWNER=:owner ORDER BY TABLE_NAME";
-            cmd.Parameters.Add(new OracleParameter(":owner", database));
+            cmd.Parameters.Add(new OracleParameter(":owner", Owner(database, schema)));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -97,7 +103,7 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<string>> GetViewsAsync(string connectionString, string database)
+    public async Task<List<string>> GetViewsAsync(string connectionString, string database, string? schema = null)
     {
         try
         {
@@ -106,7 +112,7 @@ public class OracleMetadataService : IDbMetadataService
             await conn.OpenAsync();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT VIEW_NAME FROM ALL_VIEWS WHERE OWNER=:owner";
-            cmd.Parameters.Add(new OracleParameter(":owner", database));
+            cmd.Parameters.Add(new OracleParameter(":owner", Owner(database, schema)));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -121,7 +127,7 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName)
+    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
         {
@@ -130,7 +136,7 @@ public class OracleMetadataService : IDbMetadataService
             await conn.OpenAsync();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE, DATA_DEFAULT, COLUMN_ID FROM ALL_TAB_COLUMNS WHERE OWNER=:owner AND TABLE_NAME=:tableName ORDER BY COLUMN_ID";
-            cmd.Parameters.Add(new OracleParameter(":owner", database));
+            cmd.Parameters.Add(new OracleParameter(":owner", Owner(database, schema)));
             cmd.Parameters.Add(new OracleParameter(":tableName", tableName));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -154,7 +160,7 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database)
+    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database, string? schema = null)
     {
         try
         {
@@ -163,7 +169,7 @@ public class OracleMetadataService : IDbMetadataService
             await conn.OpenAsync();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT DISTINCT OBJECT_NAME FROM ALL_PROCEDURES WHERE OWNER=:owner AND OBJECT_TYPE='PROCEDURE'";
-            cmd.Parameters.Add(new OracleParameter(":owner", database));
+            cmd.Parameters.Add(new OracleParameter(":owner", Owner(database, schema)));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -178,7 +184,7 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database)
+    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database, string? schema = null)
     {
         try
         {
@@ -187,7 +193,7 @@ public class OracleMetadataService : IDbMetadataService
             await conn.OpenAsync();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT DISTINCT OBJECT_NAME FROM ALL_PROCEDURES WHERE OWNER=:owner AND OBJECT_TYPE='FUNCTION'";
-            cmd.Parameters.Add(new OracleParameter(":owner", database));
+            cmd.Parameters.Add(new OracleParameter(":owner", Owner(database, schema)));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -202,7 +208,7 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName)
+    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
         {
@@ -211,7 +217,7 @@ public class OracleMetadataService : IDbMetadataService
             await conn.OpenAsync();
             using var cmd = conn.CreateCommand();
             cmd.CommandText = "SELECT INDEX_NAME FROM ALL_INDEXES WHERE OWNER=:owner AND TABLE_NAME=:tableName";
-            cmd.Parameters.Add(new OracleParameter(":owner", database));
+            cmd.Parameters.Add(new OracleParameter(":owner", Owner(database, schema)));
             cmd.Parameters.Add(new OracleParameter(":tableName", tableName));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())

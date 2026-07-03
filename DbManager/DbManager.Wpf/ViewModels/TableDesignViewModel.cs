@@ -13,6 +13,7 @@ public partial class TableDesignViewModel : ObservableObject
     private readonly DbConnectionModel _connection;
     private readonly string _databaseName;
     private readonly string _tableName;
+    private readonly string? _schema;
     private readonly IDbMetadataService _metadataService;
     private readonly IDbExecuteService _executeService;
     private List<TableColumnModel> _originalColumns = new();
@@ -31,11 +32,12 @@ public partial class TableDesignViewModel : ObservableObject
 
     public string TableName => _tableName;
 
-    public TableDesignViewModel(DbConnectionModel connection, string databaseName, string tableName)
+    public TableDesignViewModel(DbConnectionModel connection, string databaseName, string tableName, string? schema = null)
     {
         _connection = connection;
         _databaseName = databaseName;
         _tableName = tableName;
+        _schema = schema;
         ConnectionId = connection.Id;
         DatabaseName2 = databaseName;
         TableName2 = tableName;
@@ -56,7 +58,7 @@ public partial class TableDesignViewModel : ObservableObject
         try
         {
             var connectionString = GetConnectionString();
-            Columns = await _metadataService.GetColumnsAsync(connectionString, _databaseName, _tableName);
+            Columns = await _metadataService.GetColumnsAsync(connectionString, _databaseName, _tableName, _schema);
             _originalColumns = Columns.Select(c => c.Clone()).ToList();
             HasChanges = false;
         }

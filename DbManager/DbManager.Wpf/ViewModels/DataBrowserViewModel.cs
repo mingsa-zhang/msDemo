@@ -1,16 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DbManager.Core.Abstractions;
 using DbManager.Core.Adapters;
 using DbManager.Core.Enums;
 using DbManager.Core.Interfaces;
 using DbManager.Core.Models;
+using DbManager.Core.Services;
 using DbManager.Common;
 using DbManager.Wpf.Helpers;
 using OfficeOpenXml;
 using CsvHelper;
+using Newtonsoft.Json;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Text;
+using System.Windows;
 
 namespace DbManager.Wpf.ViewModels;
 
@@ -19,8 +24,10 @@ public partial class DataBrowserViewModel : ObservableObject
     private readonly DbConnectionModel _connection;
     private readonly string _databaseName;
     private readonly string _tableName;
+    private readonly string? _schema;
     private readonly IDbExecuteService _executeService;
     private readonly IDbMetadataService _metadataService;
+    private readonly IDialect _dialect;
     private List<string>? _primaryKeys;
 
     [ObservableProperty] private string _header = "";
@@ -44,14 +51,16 @@ public partial class DataBrowserViewModel : ObservableObject
     public bool HasNextPage => PageIndex < TotalPages;
     public string PageInfo => TotalPages > 0 ? $"第 {PageIndex}/{TotalPages} 页 (共 {TotalCount} 条)" : "无数据";
 
-    public DataBrowserViewModel(DbConnectionModel connection, string databaseName, string tableName)
+    public DataBrowserViewModel(DbConnectionModel connection, string databaseName, string tableName, string? schema = null)
     {
         _connection = connection;
         _databaseName = databaseName;
         _tableName = tableName;
+        _schema = schema;
         ConnectionId = connection.Id;
         _executeService = App.ExecuteFactory.Create(connection.DbType);
         _metadataService = App.MetadataFactory.Create(connection.DbType);
+        _dialect = DialectProvider.GetDialect(connection.DbType);
         Header = tableName;
         StatusMessage = $"{connection.Name} - {databaseName} - {tableName}";
         _ = InitializeAsync();
@@ -68,7 +77,7 @@ public partial class DataBrowserViewModel : ObservableObject
         try
         {
             var connectionString = DbConnStringBuilder.BuildDecryptedConnectionString(_connection);
-            var columns = await _metadataService.GetColumnsAsync(connectionString, _databaseName, _tableName);
+            var columns = await _metadataService.GetColumnsAsync(connectionString, _databaseName, _tableName, _schema);
             _primaryKeys = columns.Where(c => c.IsPrimaryKey).Select(c => c.ColumnName).ToList();
         }
         catch
@@ -82,36 +91,23 @@ public partial class DataBrowserViewModel : ObservableObject
         return DbConnStringBuilder.BuildDecryptedConnectionString(_connection);
     }
 
+    /// <summary>
+    /// 已加引号的表限定名（库/schema/表均经方言层引用，杜绝标识符注入）。
+    /// </summary>
+    private string QualifiedTable() => _dialect.QualifyTable(_databaseName, _schema, _tableName);
+
+    /// <summary>
+    /// 构建 WHERE 片段。注意：FilterText 是用户手写的查询条件（工具固有能力），
+    /// 属唯一原始片段；结构化参数化筛选见 T-C.5。
+    /// </summary>
+    private string BuildWhereFragment()
+        => string.IsNullOrWhiteSpace(FilterText) ? string.Empty : $"WHERE {FilterText}";
+
     private string BuildQuerySql()
-    {
-        var offset = (PageIndex - 1) * PageSize;
-        var whereClause = string.IsNullOrWhiteSpace(FilterText) ? "" : $" WHERE {FilterText}";
-        return _connection.DbType switch
-        {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB =>
-                $"SELECT * FROM `{_databaseName}`.`{_tableName}`{whereClause} LIMIT {PageSize} OFFSET {offset}",
-            DbTypeEnum.SqlServer =>
-                $"SELECT * FROM [{_databaseName}].[dbo].[{_tableName}]{whereClause} ORDER BY (SELECT NULL) OFFSET {offset} ROWS FETCH NEXT {PageSize} ROWS ONLY",
-            DbTypeEnum.PostgreSQL =>
-                $"SELECT * FROM public.{_tableName}{whereClause} LIMIT {PageSize} OFFSET {offset}",
-            DbTypeEnum.SQLite =>
-                $"SELECT * FROM \"{_tableName}\"{whereClause} LIMIT {PageSize} OFFSET {offset}",
-            _ => $"SELECT * FROM {_tableName}{whereClause}"
-        };
-    }
+        => _dialect.BuildPagedSelect(QualifiedTable(), BuildWhereFragment(), PageIndex, PageSize);
 
     private string BuildCountSql()
-    {
-        var whereClause = string.IsNullOrWhiteSpace(FilterText) ? "" : $" WHERE {FilterText}";
-        return _connection.DbType switch
-        {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB => $"SELECT COUNT(*) FROM `{_databaseName}`.`{_tableName}`{whereClause}",
-            DbTypeEnum.SqlServer => $"SELECT COUNT(*) FROM [{_databaseName}].[dbo].[{_tableName}]{whereClause}",
-            DbTypeEnum.PostgreSQL => $"SELECT COUNT(*) FROM public.{_tableName}{whereClause}",
-            DbTypeEnum.SQLite => $"SELECT COUNT(*) FROM \"{_tableName}\"{whereClause}",
-            _ => $"SELECT COUNT(*) FROM {_tableName}{whereClause}"
-        };
-    }
+        => _dialect.BuildCount(QualifiedTable(), BuildWhereFragment());
 
     private async Task LoadDataAsync()
     {
@@ -373,29 +369,9 @@ public partial class DataBrowserViewModel : ObservableObject
         }
     }
 
-    private string QuoteTableName()
-    {
-        return _connection.DbType switch
-        {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB => $"`{_databaseName}`.`{_tableName}`",
-            DbTypeEnum.SqlServer => $"[{_databaseName}].[dbo].[{_tableName}]",
-            DbTypeEnum.PostgreSQL => $"public.{_tableName}",
-            DbTypeEnum.SQLite => $"\"{_tableName}\"",
-            _ => _tableName
-        };
-    }
+    private string QuoteTableName() => QualifiedTable();
 
-    private string QuoteColumn(string col)
-    {
-        return _connection.DbType switch
-        {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB => $"`{col}`",
-            DbTypeEnum.SqlServer => $"[{col}]",
-            DbTypeEnum.PostgreSQL => $"\"{col}\"",
-            DbTypeEnum.SQLite => $"\"{col}\"",
-            _ => col
-        };
-    }
+    private string QuoteColumn(string col) => _dialect.Quoter.Quote(col);
 
     private string QuoteColumnList(List<string> columns)
     {
@@ -462,7 +438,7 @@ public partial class DataBrowserViewModel : ObservableObject
     [RelayCommand]
     private void ExportExcel()
     {
-        if (DataView == null || DataView.Table.Rows.Count == 0)
+        if (DataView?.Table == null || DataView.Table.Rows.Count == 0)
         {
             MessageTipHelper.Warning("无数据可导出");
             return;
@@ -503,7 +479,7 @@ public partial class DataBrowserViewModel : ObservableObject
     [RelayCommand]
     private void ExportCsv()
     {
-        if (DataView == null || DataView.Table.Rows.Count == 0)
+        if (DataView?.Table == null || DataView.Table.Rows.Count == 0)
         {
             MessageTipHelper.Warning("无数据可导出");
             return;
@@ -545,9 +521,9 @@ public partial class DataBrowserViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task ExportInsertSql()
+    private void ExportInsertSql()
     {
-        if (DataView == null || DataView.Table.Rows.Count == 0)
+        if (DataView?.Table == null || DataView.Table.Rows.Count == 0)
         {
             MessageTipHelper.Warning("无数据可导出");
             return;
@@ -581,6 +557,145 @@ public partial class DataBrowserViewModel : ObservableObject
             {
                 MessageTipHelper.Error($"导出失败: {ex.Message}");
             }
+        }
+    }
+
+    [RelayCommand]
+    private void ExportJson()
+    {
+        if (DataView?.Table == null || DataView.Table.Rows.Count == 0)
+        {
+            MessageTipHelper.Warning("无数据可导出");
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "JSON文件 (*.json)|*.json",
+            DefaultExt = ".json",
+            FileName = $"{_tableName}_{DateTime.Now:yyyyMMdd_HHmmss}.json"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                File.WriteAllText(dialog.FileName, BuildJson(DataView.Table), Encoding.UTF8);
+                MessageTipHelper.Success($"已导出: {dialog.FileName}");
+            }
+            catch (Exception ex)
+            {
+                MessageTipHelper.Error($"导出失败: {ex.Message}");
+            }
+        }
+    }
+
+    // ===== 复制为 =====
+
+    [RelayCommand]
+    private void CopyAsInsert()
+    {
+        var table = DataView?.Table;
+        if (!HasRows(table)) return;
+
+        var columns = table!.Columns.Cast<DataColumn>().Select(c => c.ColumnName).ToList();
+        var colList = QuoteColumnList(columns);
+        var sb = new StringBuilder();
+        foreach (DataRow row in table.Rows)
+        {
+            var values = columns.Select(c => FormatValue(row[c]));
+            sb.AppendLine($"INSERT INTO {QuoteTableName()} ({colList}) VALUES ({string.Join(", ", values)});");
+        }
+        CopyToClipboard(sb.ToString(), table.Rows.Count);
+    }
+
+    [RelayCommand]
+    private void CopyAsCsv()
+    {
+        var table = DataView?.Table;
+        if (!HasRows(table)) return;
+
+        var columns = table!.Columns.Cast<DataColumn>().ToList();
+        var sb = new StringBuilder();
+        sb.AppendLine(string.Join(",", columns.Select(c => EscapeCsv(c.ColumnName))));
+        foreach (DataRow row in table.Rows)
+        {
+            sb.AppendLine(string.Join(",", columns.Select(c => EscapeCsv(row[c]?.ToString() ?? ""))));
+        }
+        CopyToClipboard(sb.ToString(), table.Rows.Count);
+    }
+
+    [RelayCommand]
+    private void CopyAsMarkdown()
+    {
+        var table = DataView?.Table;
+        if (!HasRows(table)) return;
+
+        var columns = table!.Columns.Cast<DataColumn>().ToList();
+        var sb = new StringBuilder();
+        sb.AppendLine($"| {string.Join(" | ", columns.Select(c => c.ColumnName))} |");
+        sb.AppendLine($"| {string.Join(" | ", columns.Select(_ => "---"))} |");
+        foreach (DataRow row in table.Rows)
+        {
+            sb.AppendLine($"| {string.Join(" | ", columns.Select(c => (row[c]?.ToString() ?? "").Replace("|", "\\|")))} |");
+        }
+        CopyToClipboard(sb.ToString(), table.Rows.Count);
+    }
+
+    [RelayCommand]
+    private void CopyAsJson()
+    {
+        var table = DataView?.Table;
+        if (!HasRows(table)) return;
+
+        CopyToClipboard(BuildJson(table!), table!.Rows.Count);
+    }
+
+    private static string BuildJson(DataTable table)
+    {
+        var columns = table.Columns.Cast<DataColumn>().ToList();
+        var list = table.Rows.Cast<DataRow>().Select(row =>
+        {
+            var dict = new Dictionary<string, object?>();
+            foreach (var col in columns)
+            {
+                var val = row[col];
+                dict[col.ColumnName] = val == DBNull.Value ? null : val;
+            }
+            return dict;
+        }).ToList();
+        return JsonConvert.SerializeObject(list, Formatting.Indented);
+    }
+
+    private static bool HasRows(DataTable? table)
+    {
+        if (table == null || table.Rows.Count == 0)
+        {
+            MessageTipHelper.Warning("无数据可复制");
+            return false;
+        }
+        return true;
+    }
+
+    private static string EscapeCsv(string value)
+    {
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+        {
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        }
+        return value;
+    }
+
+    private static void CopyToClipboard(string text, int rowCount)
+    {
+        try
+        {
+            Clipboard.SetText(text);
+            MessageTipHelper.Success($"已复制 {rowCount} 行到剪贴板");
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"复制失败: {ex.Message}");
         }
     }
 }

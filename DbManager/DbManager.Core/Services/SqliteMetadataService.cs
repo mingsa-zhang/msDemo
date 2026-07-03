@@ -21,7 +21,11 @@ public class SqliteMetadataService : IDbMetadataService
         return ["main"];
     }
 
-    public async Task<List<string>> GetTablesAsync(string connectionString, string database)
+    // SQLite 无 Schema 概念，返回空表示不展开二级 Schema。
+    public Task<List<string>> GetSchemasAsync(string connectionString, string database)
+        => Task.FromResult(new List<string>());
+
+    public async Task<List<string>> GetTablesAsync(string connectionString, string database, string? schema = null)
     {
         try
         {
@@ -44,7 +48,7 @@ public class SqliteMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<string>> GetViewsAsync(string connectionString, string database)
+    public async Task<List<string>> GetViewsAsync(string connectionString, string database, string? schema = null)
     {
         try
         {
@@ -67,7 +71,7 @@ public class SqliteMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName)
+    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
         {
@@ -97,19 +101,19 @@ public class SqliteMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database)
+    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database, string? schema = null)
     {
         await Task.CompletedTask;
         return [];
     }
 
-    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database)
+    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database, string? schema = null)
     {
         await Task.CompletedTask;
         return [];
     }
 
-    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName)
+    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
         {

@@ -1,4 +1,3 @@
-using System.Data.Common;
 using System.Diagnostics;
 using DbManager.Core.Interfaces;
 using DbManager.Core.Models;
@@ -14,6 +13,8 @@ public class PostgreSqlMetadataService : IDbMetadataService
     {
         _connectionFactory = connectionFactory;
     }
+
+    private static string Sch(string? schema) => string.IsNullOrWhiteSpace(schema) ? "public" : schema;
 
     public async Task<List<string>> GetDatabasesAsync(string connectionString)
     {
@@ -36,14 +37,37 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetTablesAsync(string connectionString, string database)
+    public async Task<List<string>> GetSchemasAsync(string connectionString, string database)
     {
         var result = new List<string>();
         try
         {
             using var conn = new NpgsqlConnection(connectionString);
             await conn.OpenAsync();
-            using var cmd = new NpgsqlCommand("SELECT tablename FROM pg_tables WHERE schemaname='public'", conn);
+            using var cmd = new NpgsqlCommand(
+                "SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name <> 'information_schema' ORDER BY schema_name", conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add(reader.GetString(0));
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"PostgreSQL获取Schema列表失败: {ex.Message}");
+        }
+        return result;
+    }
+
+    public async Task<List<string>> GetTablesAsync(string connectionString, string database, string? schema = null)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = new NpgsqlConnection(connectionString);
+            await conn.OpenAsync();
+            using var cmd = new NpgsqlCommand("SELECT tablename FROM pg_tables WHERE schemaname=@schema ORDER BY tablename", conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -57,14 +81,15 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetViewsAsync(string connectionString, string database)
+    public async Task<List<string>> GetViewsAsync(string connectionString, string database, string? schema = null)
     {
         var result = new List<string>();
         try
         {
             using var conn = new NpgsqlConnection(connectionString);
             await conn.OpenAsync();
-            using var cmd = new NpgsqlCommand("SELECT viewname FROM pg_views WHERE schemaname='public'", conn);
+            using var cmd = new NpgsqlCommand("SELECT viewname FROM pg_views WHERE schemaname=@schema ORDER BY viewname", conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
@@ -78,7 +103,7 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName)
+    public async Task<List<TableColumnModel>> GetColumnsAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         var result = new List<TableColumnModel>();
         try
@@ -86,7 +111,8 @@ public class PostgreSqlMetadataService : IDbMetadataService
             using var conn = new NpgsqlConnection(connectionString);
             await conn.OpenAsync();
             using var cmd = new NpgsqlCommand(
-                "SELECT column_name, data_type, character_maximum_length, is_nullable, column_default, ordinal_position FROM information_schema.columns WHERE table_schema='public' AND table_name=@tableName ORDER BY ordinal_position", conn);
+                "SELECT column_name, data_type, character_maximum_length, is_nullable, column_default, ordinal_position FROM information_schema.columns WHERE table_schema=@schema AND table_name=@tableName ORDER BY ordinal_position", conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             cmd.Parameters.AddWithValue("@tableName", tableName);
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
@@ -109,27 +135,27 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database)
+    public async Task<List<string>> GetStoredProceduresAsync(string connectionString, string database, string? schema = null)
     {
         var result = new List<string>();
         try
         {
             using var conn = new NpgsqlConnection(connectionString);
             await conn.OpenAsync();
-            // prokind 列在 PG 11+ 才有，回退使用 pg_proc.proisdeprecated 或 routine_type
             try
             {
                 using var cmd = new NpgsqlCommand(
-                    "SELECT proname FROM pg_proc WHERE prokind='p' AND pronamespace=(SELECT oid FROM pg_namespace WHERE nspname='public')", conn);
+                    "SELECT proname FROM pg_proc WHERE prokind='p' AND pronamespace=(SELECT oid FROM pg_namespace WHERE nspname=@schema)", conn);
+                cmd.Parameters.AddWithValue("@schema", Sch(schema));
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                     result.Add(reader.GetString(0));
             }
             catch
             {
-                // PG 10 及以下使用 information_schema
                 using var cmd = new NpgsqlCommand(
-                    "SELECT routine_name FROM information_schema.routines WHERE routine_schema='public' AND routine_type='PROCEDURE'", conn);
+                    "SELECT routine_name FROM information_schema.routines WHERE routine_schema=@schema AND routine_type='PROCEDURE'", conn);
+                cmd.Parameters.AddWithValue("@schema", Sch(schema));
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                     result.Add(reader.GetString(0));
@@ -142,7 +168,7 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database)
+    public async Task<List<string>> GetFunctionsAsync(string connectionString, string database, string? schema = null)
     {
         var result = new List<string>();
         try
@@ -152,16 +178,17 @@ public class PostgreSqlMetadataService : IDbMetadataService
             try
             {
                 using var cmd = new NpgsqlCommand(
-                    "SELECT proname FROM pg_proc WHERE prokind='f' AND pronamespace=(SELECT oid FROM pg_namespace WHERE nspname='public')", conn);
+                    "SELECT proname FROM pg_proc WHERE prokind='f' AND pronamespace=(SELECT oid FROM pg_namespace WHERE nspname=@schema)", conn);
+                cmd.Parameters.AddWithValue("@schema", Sch(schema));
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                     result.Add(reader.GetString(0));
             }
             catch
             {
-                // PG 10 及以下使用 information_schema
                 using var cmd = new NpgsqlCommand(
-                    "SELECT routine_name FROM information_schema.routines WHERE routine_schema='public' AND routine_type='FUNCTION'", conn);
+                    "SELECT routine_name FROM information_schema.routines WHERE routine_schema=@schema AND routine_type='FUNCTION'", conn);
+                cmd.Parameters.AddWithValue("@schema", Sch(schema));
                 using var reader = await cmd.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                     result.Add(reader.GetString(0));
@@ -174,7 +201,7 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName)
+    public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         var result = new List<string>();
         try
@@ -182,7 +209,8 @@ public class PostgreSqlMetadataService : IDbMetadataService
             using var conn = new NpgsqlConnection(connectionString);
             await conn.OpenAsync();
             using var cmd = new NpgsqlCommand(
-                "SELECT indexname FROM pg_indexes WHERE schemaname='public' AND tablename=@tableName", conn);
+                "SELECT indexname FROM pg_indexes WHERE schemaname=@schema AND tablename=@tableName", conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
             cmd.Parameters.AddWithValue("@tableName", tableName);
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())

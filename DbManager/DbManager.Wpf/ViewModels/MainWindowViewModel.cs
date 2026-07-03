@@ -32,8 +32,8 @@ public partial class MainWindowViewModel : ObservableObject
 
         // 订阅树导航事件
         _treeViewModel.OpenSqlQueryRequested += (id, db) => _ = OpenSqlQueryAsync(id, db);
-        _treeViewModel.OpenDataBrowserRequested += (id, db, table) => _ = OpenDataBrowserAsync(id, db, table);
-        _treeViewModel.OpenTableDesignRequested += (id, db, table) => _ = OpenTableDesignAsync(id, db, table);
+        _treeViewModel.OpenDataBrowserRequested += (id, db, table, schema) => _ = OpenDataBrowserAsync(id, db, table, schema);
+        _treeViewModel.OpenTableDesignRequested += (id, db, table, schema) => _ = OpenTableDesignAsync(id, db, table, schema);
 
         _ = LoadConnectionCountAsync();
     }
@@ -84,12 +84,12 @@ public partial class MainWindowViewModel : ObservableObject
         TabCount = Tabs.Count;
     }
 
-    public async Task OpenDataBrowserAsync(int connectionId, string databaseName, string tableName)
+    public async Task OpenDataBrowserAsync(int connectionId, string databaseName, string tableName, string? schema = null)
     {
         var connection = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (connection == null) return;
 
-        var tabVm = new DataBrowserViewModel(connection, databaseName, tableName);
+        var tabVm = new DataBrowserViewModel(connection, databaseName, tableName, schema);
         var tabItem = new TabItemViewModel
         {
             Header = tableName,
@@ -101,12 +101,12 @@ public partial class MainWindowViewModel : ObservableObject
         SelectedTab = tabItem;
     }
 
-    public async Task OpenTableDesignAsync(int connectionId, string databaseName, string tableName)
+    public async Task OpenTableDesignAsync(int connectionId, string databaseName, string tableName, string? schema = null)
     {
         var connection = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (connection == null) return;
 
-        var tabVm = new TableDesignViewModel(connection, databaseName, tableName);
+        var tabVm = new TableDesignViewModel(connection, databaseName, tableName, schema);
         var tabItem = new TabItemViewModel
         {
             Header = $"{tableName} (设计)",
