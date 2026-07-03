@@ -61,6 +61,42 @@ public partial class SqlQueryTabViewModel : ObservableObject
         await ExecuteSqlAsync(SelectedSql);
     }
 
+    /// <summary>
+    /// 对单条裸 SELECT 应用"最大返回行数"限制（设置 &gt; 0 时）。
+    /// 仅当：以 SELECT 开头、单条语句、未含 LIMIT/TOP/FETCH/ROWNUM 时才改写，避免破坏复杂语句。
+    /// </summary>
+    private string ApplyRowLimit(string sql)
+    {
+        var max = App.CurrentSettings?.MaxQueryRows ?? 0;
+        if (max <= 0)
+        {
+            return sql;
+        }
+
+        var trimmed = sql.Trim().TrimEnd(';').Trim();
+        if (trimmed.Contains(';'))
+        {
+            return sql; // 多语句不处理
+        }
+        if (!trimmed.StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
+        {
+            return sql;
+        }
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"\b(LIMIT|TOP|FETCH|ROWNUM)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            return sql;
+        }
+
+        try
+        {
+            return DialectProvider.GetDialect(_connection.DbType).Paginate(trimmed, 1, max);
+        }
+        catch
+        {
+            return sql;
+        }
+    }
+
     private async Task ExecuteSqlAsync(string sql)
     {
         IsExecuting = true;
@@ -79,7 +115,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
         try
         {
             var connectionString = GetConnectionString();
-            var result = await _executeService.ExecuteQueryAsync(connectionString, sql, cancellationToken: _cts.Token);
+            var result = await _executeService.ExecuteQueryAsync(connectionString, ApplyRowLimit(sql), cancellationToken: _cts.Token);
             stopwatch.Stop();
             ExecutionTimeMs = stopwatch.ElapsedMilliseconds;
             history.ExecutionTimeMs = ExecutionTimeMs;

@@ -83,6 +83,20 @@
                                   IsChecked="{Binding AutoRefreshResults}"/>
                         <CheckBox Content="显示NULL值标记" FontSize="12" Foreground="#555" Margin="0,6,0,4"
                                   IsChecked="{Binding ShowNullMarker}"/>
+                        <Grid Margin="0,8,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="140"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="SELECT 最大返回行数" FontSize="12" VerticalAlignment="Center" Foreground="#555"/>
+                            <ComboBox Grid.Column="1" SelectedIndex="{Binding MaxRowsIndex}" FontSize="12" Height="28">
+                                <ComboBoxItem Content="不限制"/>
+                                <ComboBoxItem Content="1000"/>
+                                <ComboBoxItem Content="5000"/>
+                                <ComboBoxItem Content="10000"/>
+                                <ComboBoxItem Content="50000"/>
+                            </ComboBox>
+                        </Grid>
                     </StackPanel>
                 </Border>
             </StackPanel>

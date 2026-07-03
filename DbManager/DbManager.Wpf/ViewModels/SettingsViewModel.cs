@@ -15,6 +15,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int _pageSizeIndex;
     [ObservableProperty] private bool _autoRefreshResults;
     [ObservableProperty] private bool _showNullMarker;
+    [ObservableProperty] private int _maxRowsIndex;
 
     public SettingsViewModel(SettingsService settingsService)
     {
@@ -30,7 +31,29 @@ public partial class SettingsViewModel : ObservableObject
         PageSizeIndex = GetPageSizeIndex(_settings.DefaultPageSize);
         AutoRefreshResults = _settings.AutoRefreshResults;
         ShowNullMarker = _settings.ShowNullMarker;
+        MaxRowsIndex = GetMaxRowsIndex(_settings.MaxQueryRows);
     }
+
+    // 索引: 0=不限制 1=1000 2=5000 3=10000 4=50000
+    private static int GetMaxRowsIndex(int rows) => rows switch
+    {
+        0 => 0,
+        1000 => 1,
+        5000 => 2,
+        10000 => 3,
+        50000 => 4,
+        _ => 0
+    };
+
+    private static int GetMaxRowsFromIndex(int index) => index switch
+    {
+        0 => 0,
+        1 => 1000,
+        2 => 5000,
+        3 => 10000,
+        4 => 50000,
+        _ => 0
+    };
 
     private static int GetPageSizeIndex(int pageSize)
     {
@@ -66,6 +89,7 @@ public partial class SettingsViewModel : ObservableObject
         _settings.DefaultPageSize = GetPageSizeFromIndex(PageSizeIndex);
         _settings.AutoRefreshResults = AutoRefreshResults;
         _settings.ShowNullMarker = ShowNullMarker;
+        _settings.MaxQueryRows = GetMaxRowsFromIndex(MaxRowsIndex);
         _settingsService.SaveSettings(_settings);
 
         App.ApplyTheme(UseDarkTheme);
