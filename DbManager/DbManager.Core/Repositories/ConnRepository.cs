@@ -57,6 +57,19 @@ public class ConnRepository : IConnRepository
                 UpdatedTime TEXT
             )");
 
+        // 迁移步骤失败不应阻断启动（核心表已建好），仅记录日志
+        try
+        {
+            await MigrateSchemaAsync(connection);
+        }
+        catch (Exception ex)
+        {
+            DbManager.Common.LogHelper.Error(ex, "数据库迁移失败，已跳过（不影响核心功能）");
+        }
+    }
+
+    private static async Task MigrateSchemaAsync(SqliteConnection connection)
+    {
         // 自动迁移：为旧表补充缺失列
         var existingCols = (await connection.QueryAsync<string>(
             "SELECT name FROM pragma_table_info('db_connection')")).ToHashSet();
