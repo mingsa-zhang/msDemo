@@ -126,7 +126,10 @@ public partial class DbTreeControl : UserControl
 
     private async void Menu_EditConnection(object sender, RoutedEventArgs e)
     {
-        if (GetClickedNode(sender) is { } node)
+        if (GetClickedNode(sender) is not { } node) return;
+
+        // async void 事件处理器：捕获异常避免未处理异常导致应用崩溃
+        try
         {
             var connectionService = App.ConnectionService;
             var connection = await connectionService.GetConnectionByIdAsync(node.ConnectionId);
@@ -139,6 +142,11 @@ public partial class DbTreeControl : UserControl
             };
             window.ShowDialog();
             _ = ViewModel?.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"编辑连接失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
