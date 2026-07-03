@@ -381,10 +381,18 @@ public partial class DataBrowserViewModel : ObservableObject
     private string FormatValue(object? val)
     {
         if (val == null || val == DBNull.Value) return "NULL";
-        if (val is string s) return $"'{s.Replace("'", "''")}'";
-        if (val is DateTime dt) return $"'{dt:yyyy-MM-dd HH:mm:ss}'";
-        if (val is bool b) return b ? "1" : "0";
-        return val.ToString() ?? "NULL";
+        return val switch
+        {
+            string s => $"'{s.Replace("'", "''")}'",
+            DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss}'",
+            bool b => b ? "1" : "0",
+            byte[] bytes => "0x" + Convert.ToHexString(bytes),
+            Guid g => $"'{g}'",
+            // 数值一律用不变区域性，避免本地化把小数点写成逗号导致 SQL 非法
+            float or double or decimal or int or long or short or byte or sbyte or uint or ulong or ushort
+                => Convert.ToString(val, CultureInfo.InvariantCulture) ?? "NULL",
+            _ => val.ToString() ?? "NULL"
+        };
     }
 
     private string BuildWhereClause(DataRow row, DataTable table)
