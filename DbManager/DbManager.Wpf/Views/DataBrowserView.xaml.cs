@@ -1,4 +1,7 @@
+using System.Data;
+using System.Linq;
 using System.Windows.Controls;
+using DbManager.Wpf.ViewModels;
 
 namespace DbManager.Wpf.Views;
 
@@ -7,6 +10,17 @@ public partial class DataBrowserView : UserControl
     public DataBrowserView()
     {
         InitializeComponent();
+    }
+
+    /// <summary>
+    /// 把当前选中行同步给 ViewModel，供「删除行」使用。
+    /// </summary>
+    private void DataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (DataContext is DataBrowserViewModel vm && sender is DataGrid grid)
+        {
+            vm.SetSelectedRows(grid.SelectedItems.OfType<DataRowView>());
+        }
     }
 
     /// <summary>

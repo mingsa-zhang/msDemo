@@ -105,8 +105,10 @@
 
         <!-- 数据表格 -->
         <DataGrid Grid.Row="1"
+                  x:Name="DataGrid"
                   ItemsSource="{Binding DataView}"
                   IsReadOnly="{Binding IsEditing, Converter={StaticResource InverseBoolConverter}}"
+                  SelectionChanged="DataGrid_SelectionChanged"
                   SelectionMode="Extended"
                   GridLinesVisibility="All"
                   HeadersVisibility="All"

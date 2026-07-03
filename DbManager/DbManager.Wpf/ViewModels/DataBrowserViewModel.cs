@@ -233,29 +233,39 @@ public partial class DataBrowserViewModel : ObservableObject
         StatusMessage = "已新增一行，保存后生效";
     }
 
+    private readonly List<DataRowView> _selectedRows = new();
+
+    /// <summary>
+    /// 由视图在选择变化时回传当前选中的行。
+    /// </summary>
+    public void SetSelectedRows(IEnumerable<DataRowView> rows)
+    {
+        _selectedRows.Clear();
+        _selectedRows.AddRange(rows);
+        SelectedRowCount = _selectedRows.Count;
+    }
+
     [RelayCommand]
     private void DeleteSelectedRows()
     {
         if (DataView?.Table == null) return;
 
-        // 收集要删除的行索引
-        var toDelete = new List<DataRow>();
-        foreach (DataRow row in DataView.Table.Rows)
+        if (_selectedRows.Count == 0)
         {
-            if (row.RowState != DataRowState.Deleted)
-                toDelete.Add(row);
+            MessageTipHelper.Warning("请先选中要删除的行");
+            return;
         }
 
-        if (toDelete.Count == 0) return;
-
-        // 简化：删除最后选中行，或如果没有选择则提示
-        var lastRow = toDelete.LastOrDefault();
-        if (lastRow != null)
+        // 标记删除所有选中行（保存后生效）
+        foreach (var drv in _selectedRows.ToList())
         {
-            lastRow.Delete();
-            SelectedRowCount = DataView.Table.Rows.Cast<DataRow>().Count(r => r.RowState != DataRowState.Deleted);
-            StatusMessage = $"已标记删除，保存后生效";
+            try { drv.Row.Delete(); }
+            catch { /* 已删除/游离的行忽略 */ }
         }
+
+        SelectedRowCount = DataView.Table.Rows.Cast<DataRow>().Count(r => r.RowState != DataRowState.Deleted);
+        StatusMessage = "已标记删除，保存后生效";
+        _selectedRows.Clear();
     }
 
     [RelayCommand]
