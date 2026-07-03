@@ -20,6 +20,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
     private readonly SqlHistoryService _historyService;
     private static int _historyIdCounter = 0;
     private CancellationTokenSource? _cts;
+    private int _appliedRowLimit; // 本次执行实际生效的行数限制，0 表示未限制
 
     [ObservableProperty] private string _sqlText = string.Empty;
     [ObservableProperty] private string _selectedSql = string.Empty;
@@ -67,6 +68,7 @@ public partial class SqlQueryTabViewModel : ObservableObject
     /// </summary>
     private string ApplyRowLimit(string sql)
     {
+        _appliedRowLimit = 0;
         var max = App.CurrentSettings?.MaxQueryRows ?? 0;
         if (max <= 0)
         {
@@ -89,7 +91,9 @@ public partial class SqlQueryTabViewModel : ObservableObject
 
         try
         {
-            return DialectProvider.GetDialect(_connection.DbType).Paginate(trimmed, 1, max);
+            var limited = DialectProvider.GetDialect(_connection.DbType).Paginate(trimmed, 1, max);
+            _appliedRowLimit = max;
+            return limited;
         }
         catch
         {
@@ -140,6 +144,10 @@ public partial class SqlQueryTabViewModel : ObservableObject
                     MessageText = dataSets.Count > 1
                         ? $"查询完成，{dataSets.Count} 个结果集，共 {AffectedRows} 行，耗时 {ExecutionTimeMs} ms"
                         : $"查询完成，{AffectedRows} 行，耗时 {ExecutionTimeMs} ms";
+                    if (_appliedRowLimit > 0)
+                    {
+                        MessageText += $"（已自动限制最多 {_appliedRowLimit} 行，可在设置中调整）";
+                    }
                 }
                 else
                 {
