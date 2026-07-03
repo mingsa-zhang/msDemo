@@ -30,6 +30,7 @@ public enum TreeNodeType
     ViewGroup,
     ProcedureGroup,
     FunctionGroup,
+    ColumnGroup,
     IndexGroup,
     Table,
     View,

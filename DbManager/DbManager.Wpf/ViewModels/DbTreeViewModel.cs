@@ -209,6 +209,15 @@ public partial class DbTreeNodeViewModel : ObservableObject
                     break;
 
                 case TreeNodeType.Table:
+                    // 表展开为「字段」「索引」两个子组（对标 Navicat）
+                    children = new List<DbTreeNodeModel>
+                    {
+                        new() { DisplayName = "字段", NodeType = TreeNodeType.ColumnGroup, ConnectionId = ConnectionId, DatabaseName = DatabaseName, SchemaName = SchemaName, ObjectName = ObjectName, IconKind = "FormatListBulleted", IconColor = "#607D8B" },
+                        new() { DisplayName = "索引", NodeType = TreeNodeType.IndexGroup, ConnectionId = ConnectionId, DatabaseName = DatabaseName, SchemaName = SchemaName, ObjectName = ObjectName, IconKind = "KeyOutline", IconColor = "#FF9800" }
+                    };
+                    break;
+
+                case TreeNodeType.ColumnGroup:
                     var colNodes = await _navigateService.GetColumnNodesAsync(ConnectionId, DatabaseName!, ObjectName!, SchemaName);
                     foreach (var c in colNodes) { c.IconKind = "TextBoxOutline"; c.IconColor = "#607D8B"; }
                     children = colNodes.ToList();

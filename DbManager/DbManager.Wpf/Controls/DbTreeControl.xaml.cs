@@ -62,6 +62,8 @@ public partial class DbTreeControl : UserControl
             TreeNodeType.ViewGroup => "GroupMenu",
             TreeNodeType.ProcedureGroup => "GroupMenu",
             TreeNodeType.FunctionGroup => "GroupMenu",
+            TreeNodeType.ColumnGroup => "GroupMenu",
+            TreeNodeType.IndexGroup => "GroupMenu",
             TreeNodeType.Column => "ColumnMenu",
             _ => ""
         };
