@@ -112,9 +112,10 @@ public class ConnRepository : IConnRepository
     private static async Task DropForeignKeyIfNeededAsync(SqliteConnection connection)
     {
         // 检查 db_connection 是否有外键，有则重建表去掉外键
-        var fkList = (await connection.QueryAsync<string>(
-            "SELECT count FROM pragma_foreign_key_list('db_connection')")).ToList();
-        if (fkList.Count == 0) return;
+        // 注意：pragma_foreign_key_list 无 count 列，用 COUNT(*) 统计行数
+        var fkCount = (await connection.QueryAsync<long>(
+            "SELECT COUNT(*) FROM pragma_foreign_key_list('db_connection')")).FirstOrDefault();
+        if (fkCount == 0) return;
 
         // 使用事务保护，防止迁移失败后数据库损坏
         using var transaction = connection.BeginTransaction();
