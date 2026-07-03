@@ -247,4 +247,27 @@ public class DbTreeNavigateService : IDbTreeNavigateService
             TableName = tableName
         }).ToList();
     }
+
+    public async Task<List<DbTreeNodeModel>> GetForeignKeyNodesAsync(int connectionId, string database, string tableName, string? schema = null)
+    {
+        var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
+        if (conn == null) return new List<DbTreeNodeModel>();
+
+        var metadataService = _metadataFactory.Create(conn.DbType);
+        var connectionString = DbConnStringBuilder.BuildDecryptedConnectionString(conn);
+        var fks = await _cache.GetOrAddAsync(Key(connectionId, "fks", database, schema, tableName),
+            () => metadataService.GetForeignKeysAsync(connectionString, database, tableName, schema));
+
+        return fks.Select(fk => new DbTreeNodeModel
+        {
+            DisplayName = fk,
+            NodeType = TreeNodeType.ForeignKey,
+            IconKind = "KeyLink",
+            IconColor = "#9C27B0",
+            ConnectionId = connectionId,
+            DatabaseName = database,
+            SchemaName = schema,
+            TableName = tableName
+        }).ToList();
+    }
 }

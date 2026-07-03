@@ -213,7 +213,8 @@ public partial class DbTreeNodeViewModel : ObservableObject
                     children = new List<DbTreeNodeModel>
                     {
                         new() { DisplayName = "字段", NodeType = TreeNodeType.ColumnGroup, ConnectionId = ConnectionId, DatabaseName = DatabaseName, SchemaName = SchemaName, ObjectName = ObjectName, IconKind = "FormatListBulleted", IconColor = "#607D8B" },
-                        new() { DisplayName = "索引", NodeType = TreeNodeType.IndexGroup, ConnectionId = ConnectionId, DatabaseName = DatabaseName, SchemaName = SchemaName, ObjectName = ObjectName, IconKind = "KeyOutline", IconColor = "#FF9800" }
+                        new() { DisplayName = "索引", NodeType = TreeNodeType.IndexGroup, ConnectionId = ConnectionId, DatabaseName = DatabaseName, SchemaName = SchemaName, ObjectName = ObjectName, IconKind = "KeyOutline", IconColor = "#FF9800" },
+                        new() { DisplayName = "外键", NodeType = TreeNodeType.ForeignKeyGroup, ConnectionId = ConnectionId, DatabaseName = DatabaseName, SchemaName = SchemaName, ObjectName = ObjectName, IconKind = "KeyLink", IconColor = "#9C27B0" }
                     };
                     break;
 
@@ -226,6 +227,11 @@ public partial class DbTreeNodeViewModel : ObservableObject
                 case TreeNodeType.IndexGroup:
                     var idxNodes = await _navigateService.GetIndexNodesAsync(ConnectionId, DatabaseName!, ObjectName!, SchemaName);
                     children = idxNodes.ToList();
+                    break;
+
+                case TreeNodeType.ForeignKeyGroup:
+                    var fkNodes = await _navigateService.GetForeignKeyNodesAsync(ConnectionId, DatabaseName!, ObjectName!, SchemaName);
+                    children = fkNodes.ToList();
                     break;
 
                 default:

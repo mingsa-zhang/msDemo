@@ -201,6 +201,34 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
+    public async Task<List<string>> GetForeignKeysAsync(string connectionString, string database, string tableName, string? schema = null)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = new NpgsqlConnection(connectionString);
+            await conn.OpenAsync();
+            using var cmd = new NpgsqlCommand(
+                @"SELECT kcu.column_name, ccu.table_name AS ref_table, ccu.column_name AS ref_col
+                  FROM information_schema.table_constraints tc
+                  JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
+                  JOIN information_schema.constraint_column_usage ccu ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
+                  WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema=@schema AND tc.table_name=@tableName", conn);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
+            cmd.Parameters.AddWithValue("@tableName", tableName);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add($"{reader.GetString(0)} → {reader.GetString(1)}({reader.GetString(2)})");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"PostgreSQL获取外键失败: {ex.Message}");
+        }
+        return result;
+    }
+
     public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         var result = new List<string>();

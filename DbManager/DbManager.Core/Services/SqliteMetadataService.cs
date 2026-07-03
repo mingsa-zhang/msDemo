@@ -113,6 +113,31 @@ public class SqliteMetadataService : IDbMetadataService
         return [];
     }
 
+    public async Task<List<string>> GetForeignKeysAsync(string connectionString, string database, string tableName, string? schema = null)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = new SqliteConnection(connectionString);
+            await conn.OpenAsync();
+            // PRAGMA foreign_key_list 返回列: id, seq, table(引用表), from(本列), to(引用列), ...
+            using var cmd = new SqliteCommand($"PRAGMA foreign_key_list(\"{tableName}\")", conn);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var refTable = reader.GetString(2);
+                var fromCol = reader.GetString(3);
+                var toCol = reader.IsDBNull(4) ? "" : reader.GetString(4);
+                result.Add($"{fromCol} → {refTable}({toCol})");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"SQLite获取外键失败: {ex.Message}");
+        }
+        return result;
+    }
+
     public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try

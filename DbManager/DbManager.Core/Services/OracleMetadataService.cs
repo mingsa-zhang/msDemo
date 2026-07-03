@@ -208,6 +208,36 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
+    public async Task<List<string>> GetForeignKeysAsync(string connectionString, string database, string tableName, string? schema = null)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = new OracleConnection(connectionString);
+            await conn.OpenAsync();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText =
+                @"SELECT acc.COLUMN_NAME, rk.TABLE_NAME AS REF_TABLE, rcc.COLUMN_NAME AS REF_COL
+                  FROM ALL_CONSTRAINTS ac
+                  JOIN ALL_CONS_COLUMNS acc ON ac.CONSTRAINT_NAME = acc.CONSTRAINT_NAME AND ac.OWNER = acc.OWNER
+                  JOIN ALL_CONSTRAINTS rk ON ac.R_CONSTRAINT_NAME = rk.CONSTRAINT_NAME AND ac.R_OWNER = rk.OWNER
+                  JOIN ALL_CONS_COLUMNS rcc ON rk.CONSTRAINT_NAME = rcc.CONSTRAINT_NAME AND rk.OWNER = rcc.OWNER AND acc.POSITION = rcc.POSITION
+                  WHERE ac.CONSTRAINT_TYPE = 'R' AND ac.OWNER = :owner AND ac.TABLE_NAME = :tableName";
+            cmd.Parameters.Add(new OracleParameter(":owner", Owner(database, schema)));
+            cmd.Parameters.Add(new OracleParameter(":tableName", tableName));
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add($"{reader.GetString(0)} → {reader.GetString(1)}({reader.GetString(2)})");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Oracle获取外键失败: {ex.Message}");
+        }
+        return result;
+    }
+
     public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try

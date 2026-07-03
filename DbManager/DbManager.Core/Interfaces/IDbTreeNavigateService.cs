@@ -13,6 +13,7 @@ public interface IDbTreeNavigateService
     Task<List<DbTreeNodeModel>> GetStoredProcedureNodesAsync(int connectionId, string database, string? schema = null);
     Task<List<DbTreeNodeModel>> GetFunctionNodesAsync(int connectionId, string database, string? schema = null);
     Task<List<DbTreeNodeModel>> GetIndexNodesAsync(int connectionId, string database, string tableName, string? schema = null);
+    Task<List<DbTreeNodeModel>> GetForeignKeyNodesAsync(int connectionId, string database, string tableName, string? schema = null);
 
     /// <summary>
     /// 失效指定连接下的元数据缓存（单节点刷新时调用，确保重新查库）。
@@ -32,12 +33,14 @@ public enum TreeNodeType
     FunctionGroup,
     ColumnGroup,
     IndexGroup,
+    ForeignKeyGroup,
     Table,
     View,
     Column,
     Procedure,
     Function,
-    Index
+    Index,
+    ForeignKey
 }
 
 public class DbTreeNodeModel

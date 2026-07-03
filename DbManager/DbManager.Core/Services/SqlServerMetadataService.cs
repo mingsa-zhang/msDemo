@@ -195,6 +195,38 @@ public class SqlServerMetadataService : IDbMetadataService
         return result;
     }
 
+    public async Task<List<string>> GetForeignKeysAsync(string connectionString, string database, string tableName, string? schema = null)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = new SqlConnection(connectionString);
+            await conn.OpenAsync();
+            var sql = $@"SELECT cpa.name AS col, rt.name AS ref_table, rpa.name AS ref_col
+                        FROM [{database}].sys.foreign_keys fk
+                        JOIN [{database}].sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
+                        JOIN [{database}].sys.tables t ON fk.parent_object_id = t.object_id
+                        JOIN [{database}].sys.schemas s ON t.schema_id = s.schema_id
+                        JOIN [{database}].sys.columns cpa ON fkc.parent_object_id = cpa.object_id AND fkc.parent_column_id = cpa.column_id
+                        JOIN [{database}].sys.tables rt ON fk.referenced_object_id = rt.object_id
+                        JOIN [{database}].sys.columns rpa ON fkc.referenced_object_id = rpa.object_id AND fkc.referenced_column_id = rpa.column_id
+                        WHERE t.name=@tableName AND s.name=@schema";
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@tableName", tableName);
+            cmd.Parameters.AddWithValue("@schema", Sch(schema));
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add($"{reader.GetString(0)} → {reader.GetString(1)}({reader.GetString(2)})");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"SqlServer获取外键失败: {ex.Message}");
+        }
+        return result;
+    }
+
     public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         var result = new List<string>();

@@ -175,6 +175,31 @@ public class MySqlMetadataService : IDbMetadataService
         }
     }
 
+    public async Task<List<string>> GetForeignKeysAsync(string connectionString, string database, string tableName, string? schema = null)
+    {
+        var result = new List<string>();
+        try
+        {
+            using var conn = new MySqlConnection(connectionString);
+            await conn.OpenAsync();
+            using var cmd = new MySqlCommand(
+                "SELECT COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE " +
+                "WHERE TABLE_SCHEMA=@database AND TABLE_NAME=@tableName AND REFERENCED_TABLE_NAME IS NOT NULL", conn);
+            cmd.Parameters.AddWithValue("@database", database);
+            cmd.Parameters.AddWithValue("@tableName", tableName);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                result.Add($"{reader.GetString(0)} → {reader.GetString(1)}({reader.GetString(2)})");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MySQL获取外键失败: {ex.Message}");
+        }
+        return result;
+    }
+
     public async Task<List<string>> GetIndexesAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
