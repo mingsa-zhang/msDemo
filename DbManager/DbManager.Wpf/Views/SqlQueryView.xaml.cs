@@ -28,6 +28,11 @@ public partial class SqlQueryView : UserControl
 
         SqlEditor.Text = _viewModel.SqlText;
         SqlEditor.TextChanged += (s, args) => _viewModel.SqlText = SqlEditor.Text;
+        // 实时同步选中文本，使工具栏「运行选中」按钮也能拿到当前选区（不止 Ctrl+F5）
+        SqlEditor.TextArea.SelectionChanged += (s, args) =>
+        {
+            if (_viewModel != null) _viewModel.SelectedSql = SqlEditor.SelectedText;
+        };
         SqlEditor.Options.HighlightCurrentLine = true;
         SqlEditor.Options.ShowColumnRuler = false;
         SqlEditor.Options.ConvertTabsToSpaces = true;
