@@ -176,6 +176,35 @@ public partial class DbTreeControl : UserControl
         }
     }
 
+    private async void Menu_ViewDdl(object sender, RoutedEventArgs e)
+    {
+        if (GetClickedNode(sender) is not { } node || node.ObjectName is null) return;
+
+        try
+        {
+            var conn = await App.ConnectionService.GetConnectionByIdAsync(node.ConnectionId);
+            if (conn == null) return;
+            var metadataService = App.MetadataFactory.Create(conn.DbType);
+            var connStr = DbConnStringBuilder.BuildDecryptedConnectionString(conn);
+            var ddl = await metadataService.GetCreateTableSqlAsync(connStr, node.DatabaseName ?? "", node.ObjectName);
+
+            if (string.IsNullOrWhiteSpace(ddl))
+            {
+                MessageBox.Show("未能获取建表 SQL。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            try { Clipboard.SetText(ddl); } catch { /* 剪贴板偶发占用，忽略 */ }
+            MessageBox.Show($"{ddl}\n\n（已复制到剪贴板）", $"建表 SQL - {node.ObjectName}",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"获取建表 SQL 失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void Menu_Refresh(object sender, RoutedEventArgs e)
     {
         if (GetClickedNode(sender) is { } node)

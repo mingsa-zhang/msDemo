@@ -114,6 +114,11 @@
                             <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Header="查看建表SQL" Click="Menu_ViewDdl" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="CodeTags" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
                     <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
                         <MenuItem.Icon>
