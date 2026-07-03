@@ -287,7 +287,7 @@ public partial class DataBrowserViewModel : ObservableObject
                     var colList = QuoteColumnList(columns);
                     var valList = string.Join(", ", values);
                     var sql = $"INSERT INTO {QuoteTableName()} ({colList}) VALUES ({valList})";
-                    var result = await _executeService.ExecuteQueryAsync(connectionString, sql);
+                    var result = await _executeService.ExecuteNonQueryAsync(connectionString, sql);
                     if (!result.IsSuccess)
                     {
                         MessageTipHelper.Warning($"新增失败: {result.ErrorMessage}");
@@ -322,7 +322,7 @@ public partial class DataBrowserViewModel : ObservableObject
                     if (setClauses.Count == 0) continue;
 
                     var sql = $"UPDATE {QuoteTableName()} SET {string.Join(", ", setClauses)} WHERE {whereClause}";
-                    var result = await _executeService.ExecuteQueryAsync(connectionString, sql);
+                    var result = await _executeService.ExecuteNonQueryAsync(connectionString, sql);
                     if (!result.IsSuccess)
                     {
                         MessageTipHelper.Warning($"更新失败: {result.ErrorMessage}");
@@ -346,7 +346,7 @@ public partial class DataBrowserViewModel : ObservableObject
                     }
 
                     var sql = $"DELETE FROM {QuoteTableName()} WHERE {whereClause}";
-                    var result = await _executeService.ExecuteQueryAsync(connectionString, sql);
+                    var result = await _executeService.ExecuteNonQueryAsync(connectionString, sql);
                     if (!result.IsSuccess)
                     {
                         MessageTipHelper.Warning($"删除失败: {result.ErrorMessage}");
