@@ -211,11 +211,11 @@ public partial class DbTreeControl : UserControl
             if (execResult.IsSuccess)
                 MessageBox.Show("截断成功", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
             else
-                MessageBox.Show($"截断失败: {execResult.ErrorMessage}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"截断失败: {DbManager.Common.DbErrorTranslator.Translate(execResult.ErrorMessage)}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"截断失败: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show($"截断失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

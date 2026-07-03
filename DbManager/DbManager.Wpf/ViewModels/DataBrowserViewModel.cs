@@ -365,7 +365,7 @@ public partial class DataBrowserViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            MessageTipHelper.Error($"保存失败: {ex.Message}");
+            MessageTipHelper.Error($"保存失败: {DbErrorTranslator.Translate(ex)}");
         }
     }
 
