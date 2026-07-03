@@ -186,7 +186,7 @@ public partial class DbTreeControl : UserControl
             if (conn == null) return;
             var metadataService = App.MetadataFactory.Create(conn.DbType);
             var connStr = DbConnStringBuilder.BuildDecryptedConnectionString(conn);
-            var ddl = await metadataService.GetCreateTableSqlAsync(connStr, node.DatabaseName ?? "", node.ObjectName);
+            var ddl = await metadataService.GetCreateTableSqlAsync(connStr, node.DatabaseName ?? "", node.ObjectName, node.SchemaName);
 
             if (string.IsNullOrWhiteSpace(ddl))
             {

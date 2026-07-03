@@ -113,7 +113,7 @@ public partial class TableDesignViewModel : ObservableObject
         try
         {
             var connectionString = GetConnectionString();
-            PreviewSql = await _metadataService.GetCreateTableSqlAsync(connectionString, _databaseName, _tableName);
+            PreviewSql = await _metadataService.GetCreateTableSqlAsync(connectionString, _databaseName, _tableName, _schema);
         }
         catch (Exception ex)
         {

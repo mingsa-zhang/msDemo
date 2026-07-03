@@ -225,7 +225,7 @@ public class MySqlMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName)
+    public async Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
         {

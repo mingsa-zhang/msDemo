@@ -253,11 +253,11 @@ public class PostgreSqlMetadataService : IDbMetadataService
         return result;
     }
 
-    public async Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName)
+    public async Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
         {
-            var columns = await GetColumnsAsync(connectionString, database, tableName);
+            var columns = await GetColumnsAsync(connectionString, database, tableName, schema);
             var lines = new List<string>();
             foreach (var col in columns)
             {

@@ -263,11 +263,11 @@ public class OracleMetadataService : IDbMetadataService
         }
     }
 
-    public async Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName)
+    public async Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName, string? schema = null)
     {
         try
         {
-            var columns = await GetColumnsAsync(connectionString, database, tableName);
+            var columns = await GetColumnsAsync(connectionString, database, tableName, schema);
             var columnDefs = columns.Select(c =>
             {
                 var parts = new List<string> { $"\"{c.ColumnName}\"", c.DataType };

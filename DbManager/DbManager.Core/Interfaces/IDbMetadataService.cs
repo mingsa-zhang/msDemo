@@ -23,6 +23,6 @@ public interface IDbMetadataService
     /// </summary>
     Task<List<string>> GetForeignKeysAsync(string connectionString, string database, string tableName, string? schema = null);
 
-    Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName);
+    Task<string> GetCreateTableSqlAsync(string connectionString, string database, string tableName, string? schema = null);
     Task<long> GetTableRowCountAsync(string connectionString, string database, string tableName);
 }
