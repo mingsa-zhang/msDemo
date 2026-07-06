@@ -313,7 +313,8 @@ public partial class DataBrowserViewModel : ObservableObject
             {
                 foreach (var row in modifiedRows)
                 {
-                    var whereClause = BuildWhereClause(row, table);
+                    // 用原始值定位行（不能用编辑后的当前值，否则无主键表会匹配不到）
+                    var whereClause = BuildWhereClauseFromOriginal(row, table);
                     if (string.IsNullOrEmpty(whereClause))
                     {
                         MessageTipHelper.Warning("无法识别主键，不能更新该行");
@@ -405,23 +406,16 @@ public partial class DataBrowserViewModel : ObservableObject
         };
     }
 
-    private string BuildWhereClause(DataRow row, DataTable table)
+    /// <summary>
+    /// 生成一个"列 = 原始值"条件，值为 NULL 时用 IS NULL（否则 = NULL 永不成立）。
+    /// </summary>
+    private string BuildEquals(string column, object? originalVal)
     {
-        var whereClauses = new List<string>();
-
-        if (_primaryKeys == null || _primaryKeys.Count == 0)
+        if (originalVal == null || originalVal == DBNull.Value)
         {
-            foreach (DataColumn col in table.Columns)
-                whereClauses.Add($"{QuoteColumn(col.ColumnName)} = {FormatValue(row[col])}");
+            return $"{QuoteColumn(column)} IS NULL";
         }
-        else
-        {
-            foreach (var pk in _primaryKeys)
-                if (table.Columns.Contains(pk))
-                    whereClauses.Add($"{QuoteColumn(pk)} = {FormatValue(row[pk])}");
-        }
-
-        return string.Join(" AND ", whereClauses);
+        return $"{QuoteColumn(column)} = {FormatValue(originalVal)}";
     }
 
     private string BuildWhereClauseFromOriginal(DataRow row, DataTable table)
@@ -432,8 +426,7 @@ public partial class DataBrowserViewModel : ObservableObject
         {
             foreach (DataColumn col in table.Columns)
             {
-                var originalVal = row[col, DataRowVersion.Original];
-                whereClauses.Add($"{QuoteColumn(col.ColumnName)} = {FormatValue(originalVal)}");
+                whereClauses.Add(BuildEquals(col.ColumnName, row[col, DataRowVersion.Original]));
             }
         }
         else
@@ -442,8 +435,7 @@ public partial class DataBrowserViewModel : ObservableObject
             {
                 if (table.Columns.Contains(pk))
                 {
-                    var originalVal = row[pk, DataRowVersion.Original];
-                    whereClauses.Add($"{QuoteColumn(pk)} = {FormatValue(originalVal)}");
+                    whereClauses.Add(BuildEquals(pk, row[pk, DataRowVersion.Original]));
                 }
             }
         }
