@@ -44,6 +44,10 @@
                             Style="{StaticResource ToolBarButton}">
                         <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                     </Button>
+                    <Button ToolTip="列显隐" Click="ColumnToggle_Click" Padding="6,3" Margin="1,0"
+                            Style="{StaticResource ToolBarButton}">
+                        <materialDesign:PackIcon Kind="TableColumnPlusAfter" Width="16" Height="16"/>
+                    </Button>
                     <Separator Margin="4,2"/>
                     <Button ToolTip="编辑模式" Command="{Binding ToggleEditCommand}" Padding="6,3" Margin="1,0"
                             Style="{StaticResource ToolBarButton}">
