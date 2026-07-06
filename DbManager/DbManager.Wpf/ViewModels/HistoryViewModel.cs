@@ -11,9 +11,12 @@ public partial class HistoryViewModel : ObservableObject
     private readonly SqlHistoryService _historyService;
     private readonly Action<string>? _useSqlAction;
 
+    private List<SqlHistoryModel> _allHistories = new();
+
     [ObservableProperty] private List<SqlHistoryModel> _histories = new();
     [ObservableProperty] private SqlHistoryModel? _selectedHistory;
     [ObservableProperty] private int _historyCount;
+    [ObservableProperty] private string _searchText = string.Empty;
 
     public HistoryViewModel(SqlHistoryService historyService, Action<string>? useSqlAction = null)
     {
@@ -24,8 +27,37 @@ public partial class HistoryViewModel : ObservableObject
 
     private async Task LoadHistoriesAsync()
     {
-        Histories = await _historyService.LoadHistoriesAsync(100);
+        _allHistories = await _historyService.LoadHistoriesAsync(100);
+        ApplyFilter();
+    }
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            Histories = _allHistories;
+        }
+        else
+        {
+            var kw = SearchText.Trim();
+            Histories = _allHistories.Where(h =>
+                (h.SqlText?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (h.ConnectionName?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (h.DatabaseName?.Contains(kw, StringComparison.OrdinalIgnoreCase) ?? false)).ToList();
+        }
         HistoryCount = Histories.Count;
+    }
+
+    [RelayCommand]
+    private void DeleteSelected()
+    {
+        if (SelectedHistory?.FileName == null) return;
+
+        _historyService.DeleteHistory(SelectedHistory.FileName);
+        _allHistories.Remove(SelectedHistory);
+        ApplyFilter();
     }
 
     [RelayCommand]
@@ -42,7 +74,8 @@ public partial class HistoryViewModel : ObservableObject
     private void ClearAll()
     {
         _historyService.ClearAllHistories();
-        Histories = new List<SqlHistoryModel>();
+        _allHistories = new List<SqlHistoryModel>();
+        Histories = _allHistories;
         HistoryCount = 0;
     }
 

@@ -18,7 +18,10 @@
             <DockPanel>
                 <materialDesign:PackIcon Kind="History" Width="20" Height="20" Foreground="#555" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <TextBlock Text="SQL执行历史" FontSize="14" FontWeight="Medium" Foreground="#333" VerticalAlignment="Center"/>
-                <TextBlock DockPanel.Dock="Right" Text="{Binding HistoryCount, StringFormat='共 {0} 条'}" FontSize="11" Foreground="#888" VerticalAlignment="Center"/>
+                <TextBlock DockPanel.Dock="Right" Text="{Binding HistoryCount, StringFormat='共 {0} 条'}" FontSize="11" Foreground="#888" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                <TextBox DockPanel.Dock="Right" Width="200" Margin="16,0,0,0" FontSize="12" VerticalAlignment="Center"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         materialDesign:HintAssist.Hint="搜索 SQL / 连接 / 数据库"/>
             </DockPanel>
         </Border>
 
@@ -66,6 +69,7 @@
         <Border Grid.Row="2" Padding="12,10" Background="#F0F0F0" BorderBrush="#D8D8D8" BorderThickness="0,1,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="使用此SQL" Command="{Binding UseSqlCommand}" MinWidth="100" Margin="0,0,10,0" Padding="10,6" FontSize="12"/>
+                <Button Content="删除选中" Command="{Binding DeleteSelectedCommand}" MinWidth="80" Margin="0,0,10,0" Padding="10,6" FontSize="12"/>
                 <Button Content="清空全部" Command="{Binding ClearAllCommand}" MinWidth="80" Margin="0,0,10,0" Padding="10,6" FontSize="12"/>
                 <Button Content="关闭" Command="{Binding CloseCommand}" MinWidth="80" Padding="10,6" FontSize="12"/>
             </StackPanel>

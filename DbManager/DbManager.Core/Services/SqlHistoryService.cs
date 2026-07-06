@@ -36,7 +36,10 @@ public class SqlHistoryService
                 var json = await File.ReadAllTextAsync(file);
                 var history = JsonConvert.DeserializeObject<SqlHistoryModel>(json);
                 if (history != null)
+                {
+                    history.FileName = Path.GetFileName(file);
                     result.Add(history);
+                }
             }
             catch
             {
