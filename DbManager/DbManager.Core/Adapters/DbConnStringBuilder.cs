@@ -52,10 +52,33 @@ public static class DbConnStringBuilder
         return PasswordEncryptHelper.Decrypt(encryptedPassword);
     }
 
+    /// <summary>
+    /// 转义连接串中的值：含 ; = 引号 或首尾空格时按 ADO.NET 规范加引号，
+    /// 避免密码等含特殊字符时破坏连接串。
+    /// </summary>
+    private static string EscapeValue(string? value)
+    {
+        value ??= string.Empty;
+        var needsQuoting = value.IndexOfAny(new[] { ';', '=', '"', '\'', ' ' }) >= 0 || value != value.Trim();
+        if (!needsQuoting)
+        {
+            return value;
+        }
+        if (!value.Contains('"'))
+        {
+            return $"\"{value}\"";
+        }
+        if (!value.Contains('\''))
+        {
+            return $"'{value}'";
+        }
+        return "\"" + value.Replace("\"", "\"\"") + "\"";
+    }
+
     private static string BuildMySql(DbConnectionModel conn)
     {
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultMySqlPort;
-        var sb = $"Server={conn.Host};Port={port};Database={conn.DbName};Uid={conn.UserName};Pwd={conn.Password};";
+        var sb = $"Server={conn.Host};Port={port};Database={conn.DbName};Uid={conn.UserName};Pwd={EscapeValue(conn.Password)};";
         if (conn.ConnectTimeout > 0) sb += $"ConnectionTimeout={conn.ConnectTimeout};";
         if (conn.EnableSSL) sb += "SslMode=Required;";
         return sb;
@@ -64,7 +87,7 @@ public static class DbConnStringBuilder
     private static string BuildSqlServer(DbConnectionModel conn)
     {
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultSqlServerPort;
-        var sb = $"Server={conn.Host},{port};Database={conn.DbName};User Id={conn.UserName};Password={conn.Password};";
+        var sb = $"Server={conn.Host},{port};Database={conn.DbName};User Id={conn.UserName};Password={EscapeValue(conn.Password)};";
         if (conn.ConnectTimeout > 0) sb += $"Connection Timeout={conn.ConnectTimeout};";
         if (conn.EnableSSL) sb += "Encrypt=True;TrustServerCertificate=True;";
         return sb;
@@ -73,7 +96,7 @@ public static class DbConnStringBuilder
     private static string BuildPostgreSql(DbConnectionModel conn)
     {
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultPostgreSqlPort;
-        var sb = $"Host={conn.Host};Port={port};Database={conn.DbName};Username={conn.UserName};Password={conn.Password};";
+        var sb = $"Host={conn.Host};Port={port};Database={conn.DbName};Username={conn.UserName};Password={EscapeValue(conn.Password)};";
         if (conn.ConnectTimeout > 0) sb += $"Timeout={conn.ConnectTimeout};";
         if (conn.EnableSSL) sb += "SSL Mode=Require;Trust Server Certificate=true;";
         return sb;
@@ -83,7 +106,7 @@ public static class DbConnStringBuilder
     {
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultOraclePort;
         var serviceName = !string.IsNullOrEmpty(conn.OracleServiceName) ? conn.OracleServiceName : (!string.IsNullOrEmpty(conn.DbName) ? conn.DbName : "ORCL");
-        var sb = $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={conn.Host})(PORT={port}))(CONNECT_DATA=(SERVICE_NAME={serviceName})));User Id={conn.UserName};Password={conn.Password};";
+        var sb = $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={conn.Host})(PORT={port}))(CONNECT_DATA=(SERVICE_NAME={serviceName})));User Id={conn.UserName};Password={EscapeValue(conn.Password)};";
         if (conn.ConnectTimeout > 0) sb += $"Connection Timeout={conn.ConnectTimeout};";
         return sb;
     }
