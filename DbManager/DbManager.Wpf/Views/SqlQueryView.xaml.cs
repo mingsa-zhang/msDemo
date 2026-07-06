@@ -159,6 +159,22 @@ public partial class SqlQueryView : UserControl
         SqlEditor.Select(start, transformed.Length);
     }
 
+    /// <summary>
+    /// 双击查询结果单元格，弹窗查看完整内容（JSON 自动美化）。
+    /// </summary>
+    private void ResultGrid_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (sender is not DataGrid grid) return;
+        if (grid.CurrentCell.Item is not System.Data.DataRowView drv || grid.CurrentCell.Column is not { } col) return;
+
+        var colName = col.SortMemberPath;
+        if (string.IsNullOrEmpty(colName) || !drv.Row.Table.Columns.Contains(colName)) return;
+
+        var raw = drv.Row[colName];
+        var text = raw == null || raw == System.DBNull.Value ? "(NULL)" : raw.ToString() ?? string.Empty;
+        Helpers.CellValueViewer.Show(System.Windows.Window.GetWindow(this), colName, text);
+    }
+
     private void ToggleComment_Click(object sender, System.Windows.RoutedEventArgs e) => ToggleLineComment();
     private void UpperCase_Click(object sender, System.Windows.RoutedEventArgs e) => TransformSelectionCase(toUpper: true);
     private void LowerCase_Click(object sender, System.Windows.RoutedEventArgs e) => TransformSelectionCase(toUpper: false);

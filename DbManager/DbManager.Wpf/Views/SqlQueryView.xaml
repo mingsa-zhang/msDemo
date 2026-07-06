@@ -124,6 +124,7 @@
                             <DataTemplate>
                                 <DataGrid ItemsSource="{Binding DataView}"
                                           IsReadOnly="True"
+                                          MouseDoubleClick="ResultGrid_DoubleClick"
                                           SelectionMode="Extended"
                                           GridLinesVisibility="All"
                                           HeadersVisibility="Column"

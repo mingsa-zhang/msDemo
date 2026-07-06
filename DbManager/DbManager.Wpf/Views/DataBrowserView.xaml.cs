@@ -2,9 +2,7 @@ using System.Data;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 using DbManager.Wpf.ViewModels;
-using Newtonsoft.Json;
 
 namespace DbManager.Wpf.Views;
 
@@ -86,43 +84,6 @@ public partial class DataBrowserView : UserControl
 
         var raw = drv.Row[colName];
         var text = raw == null || raw == DBNull.Value ? "(NULL)" : raw.ToString() ?? string.Empty;
-        ShowCellValue(colName, PrettyIfJson(text));
-    }
-
-    private static string PrettyIfJson(string text)
-    {
-        var t = text.TrimStart();
-        if (t.StartsWith("{") || t.StartsWith("["))
-        {
-            try { return JsonConvert.SerializeObject(JsonConvert.DeserializeObject(text), Formatting.Indented); }
-            catch { /* 不是合法 JSON，原样返回 */ }
-        }
-        return text;
-    }
-
-    private void ShowCellValue(string title, string value)
-    {
-        var textBox = new TextBox
-        {
-            Text = value,
-            IsReadOnly = true,
-            TextWrapping = TextWrapping.Wrap,
-            AcceptsReturn = true,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            FontFamily = new FontFamily("Consolas"),
-            FontSize = 13,
-            Margin = new Thickness(8)
-        };
-        var win = new Window
-        {
-            Title = $"单元格内容 - {title}",
-            Width = 520,
-            Height = 420,
-            Content = textBox,
-            Owner = Window.GetWindow(this),
-            WindowStartupLocation = WindowStartupLocation.CenterOwner
-        };
-        win.ShowDialog();
+        Helpers.CellValueViewer.Show(Window.GetWindow(this), colName, text);
     }
 }
