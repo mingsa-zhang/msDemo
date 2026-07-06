@@ -26,6 +26,10 @@ public partial class AddEditConnViewModel : ObservableObject
     [ObservableProperty] private string _unsupportedHint = string.Empty;
     [ObservableProperty] private string _testResult = string.Empty;
     [ObservableProperty] private bool? _isTestSuccess;
+    [ObservableProperty] private ObservableCollection<string> _groupNames = new();
+    [ObservableProperty] private string _selectedGroupName = string.Empty;
+
+    private List<DbConnectionGroupModel> _groups = new();
 
     public ObservableCollection<DbTypeEnum> DbTypeList { get; } = new(Enum.GetValues<DbTypeEnum>());
 
@@ -39,6 +43,8 @@ public partial class AddEditConnViewModel : ObservableObject
             WindowTitle = "编辑连接";
         }
 
+        _ = LoadGroupsAsync();
+
         Connection.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(Connection.DbType))
@@ -49,6 +55,36 @@ public partial class AddEditConnViewModel : ObservableObject
         };
 
         UpdateDbTypeVisibility();
+    }
+
+    private async Task LoadGroupsAsync()
+    {
+        _groups = await _connectionService.GetAllGroupsAsync();
+        GroupNames = new ObservableCollection<string>(_groups.Select(g => g.Name));
+        if (Connection.GroupId > 0)
+        {
+            SelectedGroupName = _groups.FirstOrDefault(g => g.Id == Connection.GroupId)?.Name ?? string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// 解析分组名为分组 Id：为空则无分组；不存在则新建。
+    /// </summary>
+    private async Task<int> ResolveGroupIdAsync(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return 0;
+        }
+        name = name.Trim();
+        var existing = _groups.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing != null)
+        {
+            return existing.Id;
+        }
+        await _connectionService.AddGroupAsync(new DbConnectionGroupModel { Name = name });
+        var groups = await _connectionService.GetAllGroupsAsync();
+        return groups.FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase))?.Id ?? 0;
     }
 
     private void UpdateDbTypeVisibility()
@@ -124,6 +160,8 @@ public partial class AddEditConnViewModel : ObservableObject
 
         try
         {
+            Connection.GroupId = await ResolveGroupIdAsync(SelectedGroupName);
+
             if (Connection.Id > 0)
             {
                 await _connectionService.UpdateConnectionAsync(Connection);

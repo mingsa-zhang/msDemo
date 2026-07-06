@@ -47,6 +47,16 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- 分组（可选择已有或直接输入新名以创建） -->
+                        <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                            <StackPanel Margin="10,8">
+                                <TextBlock Text="分组（可留空/输入新名自动创建）" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                <ComboBox IsEditable="True" ItemsSource="{Binding GroupNames}"
+                                          Text="{Binding SelectedGroupName, UpdateSourceTrigger=PropertyChanged}"
+                                          FontSize="13" Padding="4,3"/>
+                            </StackPanel>
+                        </Border>
+
                         <!-- 数据库类型 -->
                         <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,12">
                             <StackPanel Margin="10,8">
