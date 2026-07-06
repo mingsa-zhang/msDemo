@@ -1,10 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DbManager.Common;
+using DbManager.Core.Abstractions;
 using DbManager.Core.Adapters;
 using DbManager.Core.Enums;
 using DbManager.Core.Interfaces;
 using DbManager.Core.Models;
+using DbManager.Core.Services;
 
 namespace DbManager.Wpf.ViewModels;
 
@@ -16,6 +18,7 @@ public partial class TableDesignViewModel : ObservableObject
     private readonly string? _schema;
     private readonly IDbMetadataService _metadataService;
     private readonly IDbExecuteService _executeService;
+    private readonly IDialect _dialect;
     private List<TableColumnModel> _originalColumns = new();
 
     [ObservableProperty] private string _header = "";
@@ -43,6 +46,7 @@ public partial class TableDesignViewModel : ObservableObject
         TableName2 = tableName;
         _metadataService = App.MetadataFactory.Create(connection.DbType);
         _executeService = App.ExecuteFactory.Create(connection.DbType);
+        _dialect = DialectProvider.GetDialect(connection.DbType);
         Header = $"{tableName} (设计)";
         _ = LoadColumnsAsync();
     }
@@ -142,12 +146,20 @@ public partial class TableDesignViewModel : ObservableObject
         try
         {
             var connectionString = GetConnectionString();
-            foreach (var sql in alterSqls)
+            // 跳过注释行（如 SQLite 不支持修改列的提示）
+            var executable = alterSqls.Where(s => !s.TrimStart().StartsWith("--")).ToList();
+            if (executable.Count == 0)
             {
-                var execResult = await _executeService.ExecuteQueryAsync(connectionString, sql);
+                Helpers.MessageTipHelper.Warning("当前数据库不支持所请求的修改（详见预览注释）");
+                return;
+            }
+
+            foreach (var sql in executable)
+            {
+                var execResult = await _executeService.ExecuteNonQueryAsync(connectionString, sql);
                 if (!execResult.IsSuccess)
                 {
-                    Helpers.MessageTipHelper.Error($"执行失败: {execResult.ErrorMessage}\nSQL: {sql}");
+                    Helpers.MessageTipHelper.Error($"执行失败: {DbErrorTranslator.Translate(execResult.ErrorMessage)}\nSQL: {sql}");
                     return;
                 }
             }
@@ -157,7 +169,7 @@ public partial class TableDesignViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            Helpers.MessageTipHelper.Error($"保存失败: {ex.Message}");
+            Helpers.MessageTipHelper.Error($"保存失败: {DbErrorTranslator.Translate(ex)}");
         }
     }
 
@@ -166,38 +178,39 @@ public partial class TableDesignViewModel : ObservableObject
         var sqls = new List<string>();
         var quotedTable = QuoteTableName();
 
-        // 新增列
+        // 新增列（各库 ADD 语法由方言层处理）
         foreach (var col in Columns.Where(c => c.IsNew && !c.IsDeleted))
         {
-            var colDef = BuildColumnDefinition(col);
-            sqls.Add($"ALTER TABLE {quotedTable} ADD COLUMN {QuoteColumn(col.ColumnName)} {colDef}");
+            sqls.Add(_dialect.BuildAddColumn(quotedTable, QuoteColumn(col.ColumnName), BuildColumnDefinition(col)));
         }
 
         // 删除列
         foreach (var col in Columns.Where(c => c.IsDeleted && !c.IsNew))
         {
-            sqls.Add($"ALTER TABLE {quotedTable} DROP COLUMN {QuoteColumn(col.ColumnName)}");
+            sqls.Add(_dialect.BuildDropColumn(quotedTable, QuoteColumn(col.ColumnName)));
         }
 
-        // 修改列
+        // 修改列（各库 ALTER/MODIFY 语法差异由方言层处理）
         foreach (var col in Columns.Where(c => !c.IsNew && !c.IsDeleted))
         {
             var original = _originalColumns.FirstOrDefault(o => o.ColumnName == col.ColumnName);
             if (original == null) continue;
 
-            var changes = new List<string>();
-            if (original.DataType != col.DataType || original.MaxLength != col.MaxLength)
-                changes.Add($"TYPE {BuildTypeString(col)}");
-            if (original.IsNullable != col.IsNullable)
-                changes.Add(col.IsNullable ? "DROP NOT NULL" : "SET NOT NULL");
-            if (original.DefaultValue != col.DefaultValue)
-                changes.Add(col.DefaultValue == null ? "DROP DEFAULT" : $"SET DEFAULT {FormatDefault(col.DefaultValue)}");
-
-            if (changes.Count > 0)
+            var spec = new ColumnAlterSpec
             {
-                // 不同数据库语法不同，简化为通用 ALTER COLUMN
-                var alterClauses = changes.Select(c => $"ALTER COLUMN {QuoteColumn(col.ColumnName)} {c}");
-                sqls.Add($"ALTER TABLE {quotedTable} {string.Join(", ", alterClauses)}");
+                QuotedColumn = QuoteColumn(col.ColumnName),
+                NewTypeString = BuildTypeString(col),
+                IsNullable = col.IsNullable,
+                DefaultLiteral = col.DefaultValue == null ? null : FormatDefault(col.DefaultValue),
+                FullDefinition = BuildColumnDefinition(col),
+                TypeChanged = original.DataType != col.DataType || original.MaxLength != col.MaxLength,
+                NullabilityChanged = original.IsNullable != col.IsNullable,
+                DefaultChanged = original.DefaultValue != col.DefaultValue
+            };
+
+            if (spec.HasAnyChange)
+            {
+                sqls.AddRange(_dialect.BuildAlterColumn(quotedTable, spec));
             }
         }
 
@@ -226,16 +239,7 @@ public partial class TableDesignViewModel : ObservableObject
         return typesNeedingLength.Any(t => dataType.StartsWith(t, StringComparison.OrdinalIgnoreCase));
     }
 
-    private string GetAutoIncrementSyntax()
-    {
-        return _connection.DbType switch
-        {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB => "AUTO_INCREMENT",
-            DbTypeEnum.SqlServer => "IDENTITY(1,1)",
-            DbTypeEnum.SQLite => "AUTOINCREMENT",
-            _ => "AUTO_INCREMENT"
-        };
-    }
+    private string GetAutoIncrementSyntax() => _dialect.AutoIncrementKeyword();
 
     private static string FormatDefault(string? defaultValue)
     {
@@ -244,26 +248,9 @@ public partial class TableDesignViewModel : ObservableObject
         return $"'{defaultValue}'";
     }
 
-    private string QuoteTableName()
-    {
-        return _connection.DbType switch
-        {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB => $"`{_databaseName}`.`{_tableName}`",
-            DbTypeEnum.SqlServer => $"[{_databaseName}].[dbo].[{_tableName}]",
-            DbTypeEnum.PostgreSQL => $"public.{_tableName}",
-            DbTypeEnum.SQLite => $"\"{_tableName}\"",
-            _ => _tableName
-        };
-    }
+    // 走方言层：库/schema/表统一限定并加引号（schema 感知，杜绝硬编码 public/dbo）
+    private string QuoteTableName() => _dialect.QualifyTable(_databaseName, _schema, _tableName);
 
-    private string QuoteColumn(string col)
-    {
-        return _connection.DbType switch
-        {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB => $"`{col}`",
-            DbTypeEnum.SqlServer => $"[{col}]",
-            DbTypeEnum.PostgreSQL or DbTypeEnum.SQLite => $"\"{col}\"",
-            _ => col
-        };
-    }
+    private string QuoteColumn(string col) => _dialect.Quoter.Quote(col);
+
 }

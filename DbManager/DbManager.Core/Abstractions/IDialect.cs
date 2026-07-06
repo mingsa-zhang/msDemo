@@ -45,4 +45,19 @@ public interface IDialect
     /// 字符串拼接运算符/函数
     /// </summary>
     string ConcatOperator();
+
+    /// <summary>
+    /// 生成"新增列"语句。
+    /// </summary>
+    string BuildAddColumn(string qualifiedTable, string quotedColumn, string columnDefinition);
+
+    /// <summary>
+    /// 生成"删除列"语句。
+    /// </summary>
+    string BuildDropColumn(string qualifiedTable, string quotedColumn);
+
+    /// <summary>
+    /// 生成"修改列"语句（各库语法差异大，可能返回 0 或多条）。
+    /// </summary>
+    IReadOnlyList<string> BuildAlterColumn(string qualifiedTable, ColumnAlterSpec spec);
 }
