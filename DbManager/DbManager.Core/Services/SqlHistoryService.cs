@@ -14,12 +14,39 @@ public class SqlHistoryService
         Directory.CreateDirectory(_historyDir);
     }
 
+    private const int MaxHistoryFiles = 500;
+
     public async Task SaveHistoryAsync(SqlHistoryModel history)
     {
         var fileName = $"{history.ExecuteTime:yyyyMMdd_HHmmss}_{history.Id}.json";
         var filePath = Path.Combine(_historyDir, fileName);
         var json = JsonConvert.SerializeObject(history, Formatting.Indented);
         await File.WriteAllTextAsync(filePath, json);
+
+        TrimOldHistories();
+    }
+
+    /// <summary>
+    /// 限制历史文件数量，超出上限时删除最旧的，避免无限累积。
+    /// </summary>
+    private void TrimOldHistories()
+    {
+        try
+        {
+            var files = Directory.GetFiles(_historyDir, "*.json");
+            if (files.Length <= MaxHistoryFiles)
+            {
+                return;
+            }
+            foreach (var old in files.OrderBy(f => f).Take(files.Length - MaxHistoryFiles))
+            {
+                File.Delete(old);
+            }
+        }
+        catch
+        {
+            // 清理失败不影响主流程
+        }
     }
 
     public async Task<List<SqlHistoryModel>> LoadHistoriesAsync(int limit = 100)
