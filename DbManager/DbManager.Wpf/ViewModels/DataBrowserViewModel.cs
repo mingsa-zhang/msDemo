@@ -225,6 +225,17 @@ public partial class DataBrowserViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void UndoChanges()
+    {
+        if (DataView?.Table == null) return;
+
+        DataView.Table.RejectChanges();
+        _selectedRows.Clear();
+        SelectedRowCount = 0;
+        StatusMessage = "已撤销未保存的更改";
+    }
+
+    [RelayCommand]
     private void AddRow()
     {
         if (DataView?.Table == null) return;

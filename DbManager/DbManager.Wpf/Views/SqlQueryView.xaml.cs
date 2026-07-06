@@ -37,6 +37,11 @@ public partial class SqlQueryView : UserControl
         SqlEditor.Options.ShowColumnRuler = false;
         SqlEditor.Options.ConvertTabsToSpaces = true;
         SqlEditor.Options.IndentationSize = 2;
+        // 应用设置中的 SQL 字体大小
+        if (App.CurrentSettings != null)
+        {
+            SqlEditor.FontSize = App.CurrentSettings.SqlFontSize;
+        }
 
         SearchPanel.Install(SqlEditor);
     }

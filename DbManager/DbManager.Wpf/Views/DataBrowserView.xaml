@@ -61,6 +61,10 @@
                             Style="{StaticResource ToolBarButton}" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
                         <materialDesign:PackIcon Kind="DeleteOutline" Width="14" Height="14" Foreground="#F44336"/>
                     </Button>
+                    <Button ToolTip="撤销未保存的更改" Command="{Binding UndoChangesCommand}" Padding="6,3" Margin="1,0"
+                            Style="{StaticResource ToolBarButton}" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <materialDesign:PackIcon Kind="UndoVariant" Width="14" Height="14" Foreground="#FF9800"/>
+                    </Button>
                     <Button ToolTip="保存变更" Command="{Binding SaveChangesCommand}" Padding="6,3" Margin="1,0"
                             Style="{StaticResource ToolBarButton}" Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityConverter}}">
                         <materialDesign:PackIcon Kind="ContentSaveOutline" Width="14" Height="14" Foreground="#2196F3"/>
