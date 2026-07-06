@@ -117,6 +117,7 @@
                   ItemsSource="{Binding DataView}"
                   IsReadOnly="{Binding IsEditing, Converter={StaticResource InverseBoolConverter}}"
                   SelectionChanged="DataGrid_SelectionChanged"
+                  MouseDoubleClick="DataGrid_CellDoubleClick"
                   SelectionMode="Extended"
                   GridLinesVisibility="All"
                   HeadersVisibility="All"
