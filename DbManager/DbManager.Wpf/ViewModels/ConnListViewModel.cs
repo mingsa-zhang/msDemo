@@ -12,9 +12,13 @@ public partial class ConnListViewModel : ObservableObject
 {
     private readonly DbConnectionManageService _connectionService;
 
+    private List<DbConnectionModel> _allConnections = new();
+
     [ObservableProperty] private ObservableCollection<DbConnectionModel> _connections = new();
     [ObservableProperty] private DbConnectionModel? _selectedConnection;
     [ObservableProperty] private string _searchText = string.Empty;
+    [ObservableProperty] private ObservableCollection<ConnGroupFilter> _groups = new();
+    [ObservableProperty] private ConnGroupFilter? _selectedGroup;
 
     public ConnListViewModel(DbConnectionManageService connectionService)
     {
@@ -24,8 +28,31 @@ public partial class ConnListViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        var connections = await _connectionService.GetAllConnectionsAsync();
-        Connections = new ObservableCollection<DbConnectionModel>(connections);
+        _allConnections = await _connectionService.GetAllConnectionsAsync();
+        var groupModels = await _connectionService.GetAllGroupsAsync();
+
+        var filters = new List<ConnGroupFilter> { new(0, "全部连接") };
+        filters.AddRange(groupModels.OrderBy(g => g.SortOrder).ThenBy(g => g.Name)
+            .Select(g => new ConnGroupFilter(g.Id, g.Name)));
+        filters.Add(new ConnGroupFilter(-1, "未分组"));
+
+        var keepId = SelectedGroup?.Id ?? 0;
+        Groups = new ObservableCollection<ConnGroupFilter>(filters);
+        SelectedGroup = Groups.FirstOrDefault(g => g.Id == keepId) ?? Groups[0];
+        ApplyGroupFilter();
+    }
+
+    partial void OnSelectedGroupChanged(ConnGroupFilter? value) => ApplyGroupFilter();
+
+    private void ApplyGroupFilter()
+    {
+        IEnumerable<DbConnectionModel> filtered = SelectedGroup?.Id switch
+        {
+            null or 0 => _allConnections,                       // 全部
+            -1 => _allConnections.Where(c => c.GroupId <= 0),   // 未分组
+            _ => _allConnections.Where(c => c.GroupId == SelectedGroup!.Id)
+        };
+        Connections = new ObservableCollection<DbConnectionModel>(filtered);
     }
 
     [RelayCommand]
@@ -90,3 +117,8 @@ public partial class ConnListViewModel : ObservableObject
         await LoadDataAsync();
     }
 }
+
+/// <summary>
+/// 连接分组过滤项。Id: 0=全部, -1=未分组, &gt;0=具体分组。
+/// </summary>
+public record ConnGroupFilter(int Id, string Name);
