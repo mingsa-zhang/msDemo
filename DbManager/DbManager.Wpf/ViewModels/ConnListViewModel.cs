@@ -116,6 +116,23 @@ public partial class ConnListViewModel : ObservableObject
     {
         await LoadDataAsync();
     }
+
+    [RelayCommand]
+    private async Task DeleteGroup()
+    {
+        // "全部"(0) 与 "未分组"(-1) 不可删除
+        if (SelectedGroup == null || SelectedGroup.Id <= 0)
+        {
+            Helpers.MessageTipHelper.Warning("请先选择一个可删除的分组");
+            return;
+        }
+        if (!Helpers.MessageTipHelper.Confirm($"确定删除分组「{SelectedGroup.Name}」？组内连接将变为未分组（不会删除连接）。"))
+        {
+            return;
+        }
+        await _connectionService.DeleteGroupAsync(SelectedGroup.Id);
+        await LoadDataAsync();
+    }
 }
 
 /// <summary>

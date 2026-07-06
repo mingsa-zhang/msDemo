@@ -265,7 +265,8 @@ public class ConnRepository : IConnRepository
     {
         using var connection = GetConnection();
         await connection.OpenAsync();
-        await connection.ExecuteAsync("DELETE FROM db_connection WHERE GroupId = @Id", new { Id = id });
+        // 删除分组时把其下连接置为未分组，而不是一并删除连接
+        await connection.ExecuteAsync("UPDATE db_connection SET GroupId = 0 WHERE GroupId = @Id", new { Id = id });
         return await connection.ExecuteAsync("DELETE FROM db_conn_group WHERE Id = @Id", new { Id = id });
     }
 }
