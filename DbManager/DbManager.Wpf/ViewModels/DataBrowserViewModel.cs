@@ -611,6 +611,60 @@ public partial class DataBrowserViewModel : ObservableObject
         }
     }
 
+    [RelayCommand]
+    private void ExportHtml()
+    {
+        if (DataView?.Table == null || DataView.Table.Rows.Count == 0)
+        {
+            MessageTipHelper.Warning("无数据可导出");
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "HTML文件 (*.html)|*.html",
+            DefaultExt = ".html",
+            FileName = $"{_tableName}_{DateTime.Now:yyyyMMdd_HHmmss}.html"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            try
+            {
+                var table = DataView.Table;
+                var columns = table.Columns.Cast<DataColumn>().ToList();
+                var sb = new StringBuilder();
+                sb.AppendLine("<!DOCTYPE html><html><head><meta charset=\"utf-8\">");
+                sb.AppendLine("<style>table{border-collapse:collapse;font-family:Consolas,Arial,sans-serif;font-size:13px}th,td{border:1px solid #ccc;padding:4px 8px}th{background:#f0f0f0}</style></head><body>");
+                sb.AppendLine($"<h3>{System.Net.WebUtility.HtmlEncode(_tableName)}</h3><table><thead><tr>");
+                foreach (var col in columns)
+                {
+                    sb.Append($"<th>{System.Net.WebUtility.HtmlEncode(col.ColumnName)}</th>");
+                }
+                sb.AppendLine("</tr></thead><tbody>");
+                foreach (DataRow row in table.Rows)
+                {
+                    sb.Append("<tr>");
+                    foreach (var col in columns)
+                    {
+                        var val = row[col];
+                        var text = val == null || val == DBNull.Value ? "" : val.ToString() ?? "";
+                        sb.Append($"<td>{System.Net.WebUtility.HtmlEncode(text)}</td>");
+                    }
+                    sb.AppendLine("</tr>");
+                }
+                sb.AppendLine("</tbody></table></body></html>");
+
+                File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
+                MessageTipHelper.Success($"已导出: {dialog.FileName}");
+            }
+            catch (Exception ex)
+            {
+                MessageTipHelper.Error($"导出失败: {ex.Message}");
+            }
+        }
+    }
+
     // ===== 复制为 =====
 
     [RelayCommand]

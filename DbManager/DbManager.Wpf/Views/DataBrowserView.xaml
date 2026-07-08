@@ -104,6 +104,8 @@
                                 <MenuItem Header="复制为 CSV" Command="{Binding CopyAsCsvCommand}"/>
                                 <MenuItem Header="复制为 Markdown" Command="{Binding CopyAsMarkdownCommand}"/>
                                 <MenuItem Header="复制为 JSON" Command="{Binding CopyAsJsonCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="导出 HTML" Command="{Binding ExportHtmlCommand}"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>
