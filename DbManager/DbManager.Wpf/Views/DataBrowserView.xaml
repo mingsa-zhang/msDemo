@@ -27,7 +27,11 @@
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
                              materialDesign:HintAssist.Hint="筛选条件 (如: id > 10 AND name LIKE '%test%')"
-                             FontSize="12" Padding="4,2" Margin="0,0,4,0"/>
+                             FontSize="12" Padding="4,2" Margin="0,0,4,0">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding ApplyFilterCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
                     <Button Grid.Column="1" ToolTip="应用筛选" Command="{Binding ApplyFilterCommand}"
                             Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
                         <materialDesign:PackIcon Kind="Filter" Width="14" Height="14"/>
