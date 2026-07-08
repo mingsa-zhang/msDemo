@@ -29,7 +29,11 @@
                          BorderThickness="0" Background="Transparent"
                          VerticalContentAlignment="Center"
                          materialDesign:HintAssist.Hint="搜索对象..."
-                         materialDesign:HintAssist.IsFloating="False"/>
+                         materialDesign:HintAssist.IsFloating="False">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                    </TextBox.InputBindings>
+                </TextBox>
                 <Button DockPanel.Dock="Right" ToolTip="刷新树" Command="{Binding SearchCommand}"
                         Padding="2,0" Margin="4,0,0,0" Style="{StaticResource SmallIconButton}">
                     <materialDesign:PackIcon Kind="Refresh" Width="14" Height="14"/>
