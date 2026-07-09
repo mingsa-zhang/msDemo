@@ -12,7 +12,7 @@ using System.Diagnostics;
 
 namespace DbManager.Wpf.ViewModels;
 
-public partial class SqlQueryTabViewModel : ObservableObject
+public partial class SqlQueryTabViewModel : ObservableObject, IAsyncDisposable
 {
     private readonly DbConnectionModel _connection;
     private readonly string _databaseName;
@@ -21,10 +21,12 @@ public partial class SqlQueryTabViewModel : ObservableObject
     private static int _historyIdCounter = 0;
     private CancellationTokenSource? _cts;
     private int _appliedRowLimit; // 本次执行实际生效的行数限制，0 表示未限制
+    private DbTransactionSession? _session; // 手动事务会话（关闭自动提交时启用）
 
     [ObservableProperty] private string _sqlText = string.Empty;
     [ObservableProperty] private string _selectedSql = string.Empty;
     [ObservableProperty] private bool _isExecuting;
+    [ObservableProperty] private bool _autoCommit = true; // true=自动提交；false=手动事务
     [ObservableProperty] private long _executionTimeMs;
     [ObservableProperty] private int _affectedRows;
     [ObservableProperty] private string _messageText = string.Empty;
@@ -119,7 +121,11 @@ public partial class SqlQueryTabViewModel : ObservableObject
         try
         {
             var connectionString = GetConnectionString();
-            var result = await _executeService.ExecuteQueryAsync(connectionString, ApplyRowLimit(sql), cancellationToken: _cts.Token);
+            var limitedSql = ApplyRowLimit(sql);
+            // 手动事务模式走会话（同一连接+事务），否则走无状态执行服务
+            var result = _session is { IsActive: true }
+                ? await _session.ExecuteAsync(limitedSql, cancellationToken: _cts.Token)
+                : await _executeService.ExecuteQueryAsync(connectionString, limitedSql, cancellationToken: _cts.Token);
             stopwatch.Stop();
             ExecutionTimeMs = stopwatch.ElapsedMilliseconds;
             history.ExecutionTimeMs = ExecutionTimeMs;
@@ -203,6 +209,110 @@ public partial class SqlQueryTabViewModel : ObservableObject
     private void StopExecution()
     {
         _cts?.Cancel();
+    }
+
+    // ===== 事务 / 自动提交 =====
+
+    /// <summary>
+    /// 切换自动提交：关闭时开启手动事务会话；开启时提交并释放会话。
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleAutoCommit()
+    {
+        if (AutoCommit)
+        {
+            // 关闭自动提交 → 进入手动事务
+            try
+            {
+                var session = new DbTransactionSession(_connection, App.ConnectionFactory);
+                await session.BeginAsync();
+                _session = session;
+                AutoCommit = false;
+                MessageText = "已进入手动事务模式（自动提交关闭）；执行后需手动「提交」或「回滚」";
+            }
+            catch (Exception ex)
+            {
+                _session = null;
+                MessageTipHelper.Error($"开启事务失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}");
+            }
+        }
+        else
+        {
+            // 恢复自动提交 → 提交并释放会话
+            try
+            {
+                if (_session != null)
+                {
+                    await _session.CommitAsync();
+                    await _session.DisposeAsync();
+                    _session = null;
+                }
+                AutoCommit = true;
+                MessageText = "已提交并恢复自动提交";
+            }
+            catch (Exception ex)
+            {
+                MessageTipHelper.Error($"提交失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 提交当前事务（会话保持，继续下一个事务）。
+    /// </summary>
+    [RelayCommand]
+    private async Task CommitTransaction()
+    {
+        if (_session is not { IsActive: true })
+        {
+            MessageTipHelper.Warning("当前不在手动事务模式");
+            return;
+        }
+
+        try
+        {
+            await _session.CommitAsync();
+            MessageText = "事务已提交";
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"提交失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}");
+        }
+    }
+
+    /// <summary>
+    /// 回滚当前事务（会话保持，继续下一个事务）。
+    /// </summary>
+    [RelayCommand]
+    private async Task RollbackTransaction()
+    {
+        if (_session is not { IsActive: true })
+        {
+            MessageTipHelper.Warning("当前不在手动事务模式");
+            return;
+        }
+
+        try
+        {
+            await _session.RollbackAsync();
+            MessageText = "事务已回滚";
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"回滚失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}");
+        }
+    }
+
+    /// <summary>
+    /// 释放：回滚未提交事务并关闭会话连接（标签关闭时调用）。
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_session != null)
+        {
+            await _session.DisposeAsync();
+            _session = null;
+        }
     }
 
     [RelayCommand]

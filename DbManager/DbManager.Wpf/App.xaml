@@ -19,6 +19,7 @@
             <converters:StringToPackIconKindConverter x:Key="StringToPackIconKindConverter"/>
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <converters:BoolToEditModeTextConverter x:Key="BoolToEditModeTextConverter"/>
+            <converters:AutoCommitTextConverter x:Key="AutoCommitTextConverter"/>
 
             <!-- Navicat风格扁平工具栏按钮 -->
             <Style x:Key="ToolBarButton" TargetType="Button">

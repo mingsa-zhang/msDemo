@@ -19,6 +19,18 @@ public class NullCellDisplayConverter : IValueConverter
 }
 
 /// <summary>
+/// 自动提交状态文本：true → "自动提交"，false → "手动事务"。
+/// </summary>
+public class AutoCommitTextConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is true ? "自动提交" : "手动事务";
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
+/// <summary>
 /// 值是否为 DBNull/null（供样式触发器判断 NULL 单元格）。
 /// </summary>
 public class IsDbNullConverter : IValueConverter

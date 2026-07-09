@@ -144,6 +144,12 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void CloseTab(TabItemViewModel tab)
     {
+        // 释放持有资源的标签（如手动事务会话）
+        if (tab.Content is IAsyncDisposable disposable)
+        {
+            _ = disposable.DisposeAsync();
+        }
+
         var idx = Tabs.IndexOf(tab);
         Tabs.Remove(tab);
         TabCount = Tabs.Count;

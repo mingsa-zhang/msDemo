@@ -74,6 +74,31 @@
                 <Button ToolTip="执行历史" Command="{Binding ShowHistoryCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="History" Width="16" Height="16" VerticalAlignment="Center"/>
                 </Button>
+                <Separator Margin="4,2"/>
+                <!-- 事务：切换自动提交 / 手动事务 + 提交 / 回滚 -->
+                <Button ToolTip="切换 自动提交/手动事务" Command="{Binding ToggleAutoCommitCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="SwapHorizontal" Width="16" Height="16" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding AutoCommit, Converter={StaticResource AutoCommitTextConverter}}"
+                                   Margin="2,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button ToolTip="提交事务" Command="{Binding CommitTransactionCommand}" Padding="6,3" Margin="1,0"
+                        Style="{StaticResource ToolBarButton}"
+                        Visibility="{Binding AutoCommit, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CheckCircleOutline" Width="16" Height="16" VerticalAlignment="Center" Foreground="#4CAF50"/>
+                        <TextBlock Text="提交" Margin="2,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button ToolTip="回滚事务" Command="{Binding RollbackTransactionCommand}" Padding="6,3" Margin="1,0"
+                        Style="{StaticResource ToolBarButton}"
+                        Visibility="{Binding AutoCommit, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="UndoVariant" Width="16" Height="16" VerticalAlignment="Center" Foreground="#F44336"/>
+                        <TextBlock Text="回滚" Margin="2,0,0,0" FontSize="11" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </StackPanel>
         </Border>
 
