@@ -72,6 +72,27 @@ public partial class DataBrowserView : UserControl
     }
 
     /// <summary>
+    /// 打开可视化筛选构建器；确认后应用生成的 WHERE。
+    /// </summary>
+    private async void OpenFilterBuilder_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is not DataBrowserViewModel vm) return;
+
+        if (vm.ColumnNames.Count == 0)
+        {
+            Helpers.MessageTipHelper.Warning("尚未加载到列信息，请先等待数据加载完成");
+            return;
+        }
+
+        var builderVm = new FilterBuilderViewModel(vm.ColumnNames, vm.Dialect, vm.GetColumnLogicalType);
+        var window = new FilterBuilderWindow(builderVm) { Owner = Window.GetWindow(this) };
+        if (window.ShowDialog() == true)
+        {
+            await vm.ApplyStructuredFilterAsync(window.ResultWhere);
+        }
+    }
+
+    /// <summary>
     /// 双击单元格：只读模式弹窗查看完整内容（JSON 美化）；编辑模式弹出类型化编辑器。
     /// </summary>
     private void DataGrid_CellDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

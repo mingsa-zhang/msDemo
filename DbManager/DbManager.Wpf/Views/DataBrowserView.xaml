@@ -24,6 +24,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
                              materialDesign:HintAssist.Hint="筛选条件 (如: id > 10 AND name LIKE '%test%')"
@@ -36,7 +37,11 @@
                             Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
                         <materialDesign:PackIcon Kind="Filter" Width="14" Height="14"/>
                     </Button>
-                    <Button Grid.Column="2" ToolTip="清除筛选" Command="{Binding ClearFilterCommand}"
+                    <Button Grid.Column="2" ToolTip="筛选构建器" Click="OpenFilterBuilder_Click"
+                            Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                        <materialDesign:PackIcon Kind="FilterCog" Width="14" Height="14"/>
+                    </Button>
+                    <Button Grid.Column="3" ToolTip="清除筛选" Command="{Binding ClearFilterCommand}"
                             Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
                         <materialDesign:PackIcon Kind="FilterOff" Width="14" Height="14"/>
                     </Button>

@@ -32,6 +32,7 @@ public partial class DataBrowserViewModel : ObservableObject
     private List<string>? _primaryKeys;
     private readonly Dictionary<string, LogicalTypeEnum> _columnTypes = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, bool> _columnNullable = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _columnNames = new();
 
     [ObservableProperty] private string _header = "";
     [ObservableProperty] private string _iconKind = "TableSearch";
@@ -84,13 +85,15 @@ public partial class DataBrowserViewModel : ObservableObject
             var columns = await _metadataService.GetColumnsAsync(connectionString, _databaseName, _tableName, _schema);
             _primaryKeys = columns.Where(c => c.IsPrimaryKey).Select(c => c.ColumnName).ToList();
 
-            // 记录各列逻辑类型与可空性，供类型化单元格编辑器选型
+            // 记录各列逻辑类型与可空性，供类型化单元格编辑器/筛选构建器选型
             _columnTypes.Clear();
             _columnNullable.Clear();
+            _columnNames.Clear();
             foreach (var c in columns)
             {
                 _columnTypes[c.ColumnName] = _typeMapper.ToLogicalType(c.DataType);
                 _columnNullable[c.ColumnName] = c.IsNullable;
+                _columnNames.Add(c.ColumnName);
             }
         }
         catch
@@ -110,6 +113,26 @@ public partial class DataBrowserViewModel : ObservableObject
     /// </summary>
     public bool IsColumnNullable(string columnName)
         => !_columnNullable.TryGetValue(columnName, out var n) || n;
+
+    /// <summary>
+    /// 供筛选构建器使用的列名清单（按列序）。
+    /// </summary>
+    public IReadOnlyList<string> ColumnNames => _columnNames;
+
+    /// <summary>
+    /// 当前表方言，供筛选构建器做标识符引用。
+    /// </summary>
+    public IDialect Dialect => _dialect;
+
+    /// <summary>
+    /// 应用结构化筛选：将生成的 WHERE 片段（不含 WHERE 关键字）写入筛选框并执行。
+    /// </summary>
+    public async Task ApplyStructuredFilterAsync(string whereFragment)
+    {
+        FilterText = whereFragment;
+        PageIndex = 1;
+        await LoadDataAsync();
+    }
 
     private string GetConnectionString()
     {
