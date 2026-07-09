@@ -33,6 +33,66 @@ public partial class DataBrowserView : UserControl
     }
 
     /// <summary>
+    /// 自动生成列时替换为模板列：显示模板对 NULL 呈现灰色斜体 "(NULL)"，
+    /// 编辑模板仍绑定真实值（不经转换器），保证编辑无副作用。
+    /// </summary>
+    private void DataGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
+    {
+        var path = e.PropertyName;
+
+        var templateCol = new DataGridTemplateColumn
+        {
+            Header = e.PropertyName,
+            SortMemberPath = path, // 保留排序与双击定位能力
+            CellTemplate = BuildNullAwareDisplayTemplate(path),
+            CellEditingTemplate = BuildEditTemplate(path)
+        };
+        e.Column = templateCol;
+    }
+
+    /// <summary>
+    /// 显示模板：TextBlock，NULL 显示 "(NULL)" 并置灰斜体。
+    /// </summary>
+    private static DataTemplate BuildNullAwareDisplayTemplate(string path)
+    {
+        var factory = new System.Windows.FrameworkElementFactory(typeof(TextBlock));
+        factory.SetBinding(TextBlock.TextProperty,
+            new System.Windows.Data.Binding(path) { Converter = new Converters.NullCellDisplayConverter() });
+        factory.SetValue(TextBlock.MarginProperty, new Thickness(4, 0, 4, 0));
+        factory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
+
+        // NULL 时置灰斜体
+        var style = new Style(typeof(TextBlock));
+        var trigger = new System.Windows.DataTrigger
+        {
+            Binding = new System.Windows.Data.Binding(path) { Converter = new Converters.IsDbNullConverter() },
+            Value = true
+        };
+        trigger.Setters.Add(new Setter(TextBlock.ForegroundProperty,
+            new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0xB0, 0xB0, 0xB0))));
+        trigger.Setters.Add(new Setter(TextBlock.FontStyleProperty, FontStyles.Italic));
+        style.Triggers.Add(trigger);
+        factory.SetValue(TextBlock.StyleProperty, style);
+
+        return new DataTemplate { VisualTree = factory };
+    }
+
+    /// <summary>
+    /// 编辑模板：普通 TextBox，双向绑定真实值（不经转换器）。
+    /// </summary>
+    private static DataTemplate BuildEditTemplate(string path)
+    {
+        var factory = new System.Windows.FrameworkElementFactory(typeof(TextBox));
+        factory.SetBinding(TextBox.TextProperty, new System.Windows.Data.Binding(path)
+        {
+            Mode = System.Windows.Data.BindingMode.TwoWay,
+            UpdateSourceTrigger = System.Windows.Data.UpdateSourceTrigger.LostFocus
+        });
+        factory.SetValue(TextBox.BorderThicknessProperty, new Thickness(0));
+        return new DataTemplate { VisualTree = factory };
+    }
+
+    /// <summary>
     /// "复制为"按钮：左键点击即展开其下拉菜单。
     /// </summary>
     private void CopyAsButton_Click(object sender, System.Windows.RoutedEventArgs e)

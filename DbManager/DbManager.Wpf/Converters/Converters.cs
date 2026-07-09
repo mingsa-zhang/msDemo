@@ -6,6 +6,30 @@ using MaterialDesignThemes.Wpf;
 
 namespace DbManager.Wpf.Converters;
 
+/// <summary>
+/// 单元格 NULL 显示：DBNull/null 显示为 "(NULL)"，否则原样文本。
+/// </summary>
+public class NullCellDisplayConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value == null || value == System.DBNull.Value ? "(NULL)" : value.ToString() ?? string.Empty;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
+/// <summary>
+/// 值是否为 DBNull/null（供样式触发器判断 NULL 单元格）。
+/// </summary>
+public class IsDbNullConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value == null || value == System.DBNull.Value;
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
 public class BoolToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
