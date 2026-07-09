@@ -11,6 +11,29 @@ public partial class DataBrowserView : UserControl
     public DataBrowserView()
     {
         InitializeComponent();
+        // 视图卸载（关标签/切表）时保存列宽
+        Unloaded += (_, _) => SaveColumnWidths();
+    }
+
+    /// <summary>
+    /// 保存当前各列宽度到持久化存储。
+    /// </summary>
+    private void SaveColumnWidths()
+    {
+        if (DataContext is not DataBrowserViewModel vm || DataGrid.Columns.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var col in DataGrid.Columns)
+        {
+            var name = col.Header?.ToString();
+            if (!string.IsNullOrEmpty(name) && col.ActualWidth > 0)
+            {
+                Helpers.ColumnWidthStore.Set(vm.TableKey, name, col.ActualWidth);
+            }
+        }
+        Helpers.ColumnWidthStore.Flush();
     }
 
     /// <summary>
@@ -47,6 +70,13 @@ public partial class DataBrowserView : UserControl
             CellTemplate = BuildNullAwareDisplayTemplate(path),
             CellEditingTemplate = BuildEditTemplate(path)
         };
+
+        // 应用持久化的列宽（有记录时）
+        if (DataContext is DataBrowserViewModel vm && Helpers.ColumnWidthStore.Get(vm.TableKey, e.PropertyName) is { } savedWidth)
+        {
+            templateCol.Width = new DataGridLength(savedWidth);
+        }
+
         e.Column = templateCol;
     }
 

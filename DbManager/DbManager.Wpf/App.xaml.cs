@@ -70,6 +70,15 @@ public partial class App : Application
         {
             // 退出清理异常忽略
         }
+        // 兜底落盘列宽（Unloaded 未触发时）
+        try
+        {
+            Helpers.ColumnWidthStore.Flush();
+        }
+        catch
+        {
+            // 退出清理异常忽略
+        }
         base.OnExit(e);
     }
 

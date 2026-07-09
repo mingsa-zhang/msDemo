@@ -51,6 +51,11 @@ public partial class DataBrowserViewModel : ObservableObject
     public string TableName => _tableName;
     public DataTable? SourceTable => DataView?.Table;
 
+    /// <summary>
+    /// 列宽持久化用的表键（连接/库/schema/表唯一标识）。
+    /// </summary>
+    public string TableKey => $"{ConnectionId}|{_databaseName}|{_schema}|{_tableName}";
+
     public bool HasPreviousPage => PageIndex > 1;
     public bool HasNextPage => PageIndex < TotalPages;
     public string PageInfo => TotalPages > 0 ? $"第 {PageIndex}/{TotalPages} 页 (共 {TotalCount} 条)" : "无数据";
