@@ -127,6 +127,13 @@ public partial class FilterBuilderViewModel : ObservableObject
                     .Select(v => FormatLiteral(v, type));
                 var joined = string.Join(", ", items);
                 return string.IsNullOrEmpty(joined) ? string.Empty : $"{col} IN ({joined})";
+            case FilterOperatorKind.Between:
+                var bounds = (row.Value ?? string.Empty)
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToList();
+                return bounds.Count < 2
+                    ? string.Empty
+                    : $"{col} BETWEEN {FormatLiteral(bounds[0], type)} AND {FormatLiteral(bounds[1], type)}";
             default:
                 // 比较运算符：= <> > >= < <=
                 return $"{col} {op.Sql} {FormatLiteral(row.Value ?? string.Empty, type)}";
@@ -181,6 +188,7 @@ public enum FilterOperatorKind
     NotContains,
     StartsWith,
     In,
+    Between,
     IsNull,
     IsNotNull
 }
@@ -220,6 +228,7 @@ public sealed class FilterOperatorOption
         new FilterOperatorOption { Display = "不包含", Kind = FilterOperatorKind.NotContains },
         new FilterOperatorOption { Display = "开头是", Kind = FilterOperatorKind.StartsWith },
         new FilterOperatorOption { Display = "在列表(逗号分隔)", Kind = FilterOperatorKind.In },
+        new FilterOperatorOption { Display = "在区间(a,b)", Kind = FilterOperatorKind.Between },
         new FilterOperatorOption { Display = "为空", Kind = FilterOperatorKind.IsNull },
         new FilterOperatorOption { Display = "不为空", Kind = FilterOperatorKind.IsNotNull }
     };

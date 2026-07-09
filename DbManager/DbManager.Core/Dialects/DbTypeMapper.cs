@@ -49,7 +49,7 @@ public sealed class DefaultDbTypeMapper : IDbTypeMapper
         {
             return LogicalTypeEnum.DateTime;
         }
-        if (t.Contains("blob") || t.Contains("binary") || t.Contains("bytea") || t.Contains("image") || t == "raw" || t == "clob")
+        if (t.Contains("blob") || t.Contains("binary") || t.Contains("bytea") || t.Contains("image") || t == "raw")
         {
             return LogicalTypeEnum.Binary;
         }
@@ -58,7 +58,8 @@ public sealed class DefaultDbTypeMapper : IDbTypeMapper
         {
             return LogicalTypeEnum.Number;
         }
-        if (t.Contains("char") || t.Contains("text") || t.Contains("string") || t.Contains("nvarchar") || t == "enum")
+        // CLOB/NCLOB 为字符大对象，归为文本（不是二进制）
+        if (t.Contains("char") || t.Contains("text") || t.Contains("string") || t.Contains("nvarchar") || t.Contains("clob") || t == "enum")
         {
             return LogicalTypeEnum.Text;
         }
