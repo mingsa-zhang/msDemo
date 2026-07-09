@@ -1,5 +1,6 @@
 using DbManager.Core.Enums;
 using DbManager.Core.Models;
+using DbManager.Core.Services;
 using DbManager.Common;
 
 namespace DbManager.Core.Adapters;
@@ -8,24 +9,70 @@ public static class DbConnStringBuilder
 {
     /// <summary>
     /// 构建连接字符串。要求传入的密码已经是明文（调用方负责解密）。
+    /// 若启用 SSH，会先拉起隧道并把主机/端口改写为本地转发端点。
     /// </summary>
     public static string BuildConnectionString(DbConnectionModel conn)
     {
         if (!string.IsNullOrEmpty(conn.ConnectionString))
             return conn.ConnectionString;
 
+        var effective = MaybeApplySshTunnel(conn);
+
+        return effective.DbType switch
+        {
+            DbTypeEnum.MySql => BuildMySql(effective),
+            DbTypeEnum.MariaDB => BuildMySql(effective),
+            DbTypeEnum.SqlServer => BuildSqlServer(effective),
+            DbTypeEnum.PostgreSQL => BuildPostgreSql(effective),
+            DbTypeEnum.Oracle => BuildOracle(effective),
+            DbTypeEnum.SQLite => BuildSQLite(effective),
+            DbTypeEnum.MongoDB => BuildMongoDb(effective),
+            DbTypeEnum.Redis => BuildRedis(effective),
+            DbTypeEnum.DB2 => BuildDb2(effective),
+            _ => throw new NotSupportedException($"不支持的数据库类型: {effective.DbType}")
+        };
+    }
+
+    /// <summary>
+    /// 启用 SSH 时拉起隧道并返回主机/端口改写为本地转发端点的副本；否则原样返回。
+    /// </summary>
+    private static DbConnectionModel MaybeApplySshTunnel(DbConnectionModel conn)
+    {
+        // 文件型库无网络端点，不适用 SSH
+        if (!conn.UseSsh || conn.DbType == DbTypeEnum.SQLite)
+        {
+            return conn;
+        }
+
+        var targetPort = ResolveTargetPort(conn);
+        var (localHost, localPort) = SshTunnelManager.EnsureTunnel(conn, conn.Host, targetPort);
+
+        var tunneled = conn.Clone();
+        tunneled.Host = localHost;
+        tunneled.Port = localPort;
+        return tunneled;
+    }
+
+    /// <summary>
+    /// 解析目标库的实际端口（未填时取该库默认端口），供隧道转发到远端。
+    /// </summary>
+    private static int ResolveTargetPort(DbConnectionModel conn)
+    {
+        if (conn.Port > 0)
+        {
+            return conn.Port;
+        }
+
         return conn.DbType switch
         {
-            DbTypeEnum.MySql => BuildMySql(conn),
-            DbTypeEnum.MariaDB => BuildMySql(conn),
-            DbTypeEnum.SqlServer => BuildSqlServer(conn),
-            DbTypeEnum.PostgreSQL => BuildPostgreSql(conn),
-            DbTypeEnum.Oracle => BuildOracle(conn),
-            DbTypeEnum.SQLite => BuildSQLite(conn),
-            DbTypeEnum.MongoDB => BuildMongoDb(conn),
-            DbTypeEnum.Redis => BuildRedis(conn),
-            DbTypeEnum.DB2 => BuildDb2(conn),
-            _ => throw new NotSupportedException($"不支持的数据库类型: {conn.DbType}")
+            DbTypeEnum.MySql or DbTypeEnum.MariaDB => AppConst.DefaultMySqlPort,
+            DbTypeEnum.SqlServer => AppConst.DefaultSqlServerPort,
+            DbTypeEnum.PostgreSQL => AppConst.DefaultPostgreSqlPort,
+            DbTypeEnum.Oracle => AppConst.DefaultOraclePort,
+            DbTypeEnum.MongoDB => AppConst.DefaultMongoDbPort,
+            DbTypeEnum.Redis => AppConst.DefaultRedisPort,
+            DbTypeEnum.DB2 => AppConst.DefaultDb2Port,
+            _ => conn.Port
         };
     }
 
@@ -39,6 +86,11 @@ public static class DbConnStringBuilder
             cloned.Password = DecryptPassword(cloned.Password);
         if (!string.IsNullOrEmpty(cloned.RedisPassword))
             cloned.RedisPassword = DecryptPassword(cloned.RedisPassword);
+        // SSH 凭据同样落库加密，构建前解密供隧道使用
+        if (!string.IsNullOrEmpty(cloned.SshPassword))
+            cloned.SshPassword = DecryptPassword(cloned.SshPassword);
+        if (!string.IsNullOrEmpty(cloned.SshPassphrase))
+            cloned.SshPassphrase = DecryptPassword(cloned.SshPassphrase);
         return BuildConnectionString(cloned);
     }
 

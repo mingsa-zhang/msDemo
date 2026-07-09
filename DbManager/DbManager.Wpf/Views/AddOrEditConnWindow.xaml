@@ -318,6 +318,78 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+
+            <!-- ===== SSH 隧道标签页 ===== -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal" Margin="4,2">
+                        <materialDesign:PackIcon Kind="ServerNetwork" Width="14" Height="14"
+                                                 VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="SSH" VerticalAlignment="Center" FontSize="12"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="8,4">
+                    <StackPanel>
+                        <CheckBox Content="通过 SSH 隧道连接" IsChecked="{Binding Connection.UseSsh}"
+                                  Margin="8,8,0,8" FontSize="13"/>
+                        <StackPanel IsEnabled="{Binding Connection.UseSsh}">
+                            <!-- SSH 主机 + 端口 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <Grid Margin="10,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="100"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="SSH 主机" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.SshHost, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="SSH 端口" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                        <TextBox Text="{Binding Connection.SshPort, UpdateSourceTrigger=PropertyChanged}"
+                                                 FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <!-- SSH 用户名 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="SSH 用户名" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.SshUser, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                            <!-- 认证方式 -->
+                            <CheckBox Content="使用私钥文件认证（否则用密码）" IsChecked="{Binding Connection.SshUseKeyFile}"
+                                      Margin="8,0,0,8" FontSize="12.5"/>
+                            <!-- SSH 密码 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="SSH 密码" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <PasswordBox Name="SshPasswordBox" FontSize="13" Padding="4,3"/>
+                                </StackPanel>
+                            </Border>
+                            <!-- 私钥路径 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="私钥文件路径" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <TextBox Text="{Binding Connection.SshKeyPath, UpdateSourceTrigger=PropertyChanged}"
+                                             FontSize="13" Padding="4,3" BorderThickness="0" Background="Transparent"/>
+                                </StackPanel>
+                            </Border>
+                            <!-- 私钥口令 -->
+                            <Border Background="White" CornerRadius="4" BorderBrush="#E0E0E0" BorderThickness="1" Margin="0,0,0,8">
+                                <StackPanel Margin="10,8">
+                                    <TextBlock Text="私钥口令（可选）" FontSize="11.5" Foreground="#666" Margin="0,0,0,4"/>
+                                    <PasswordBox Name="SshPassphraseBox" FontSize="13" Padding="4,3"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
         </TabControl>
 
         <!-- 底部按钮区 - Navicat风格 -->

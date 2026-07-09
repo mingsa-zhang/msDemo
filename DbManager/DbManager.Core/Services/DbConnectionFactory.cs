@@ -32,12 +32,6 @@ public class DbConnectionFactory : IDbConnectionFactory
     }
 
     private static string BuildDecryptedConnectionString(DbConnectionModel conn)
-    {
-        var cloned = conn.Clone();
-        if (!string.IsNullOrEmpty(cloned.Password))
-            cloned.Password = DbConnStringBuilder.DecryptPassword(cloned.Password);
-        if (!string.IsNullOrEmpty(cloned.RedisPassword))
-            cloned.RedisPassword = DbConnStringBuilder.DecryptPassword(cloned.RedisPassword);
-        return DbConnStringBuilder.BuildConnectionString(cloned);
-    }
+        // 统一走一站式解密+构建（含 SSH 凭据解密与隧道拉起）
+        => DbConnStringBuilder.BuildDecryptedConnectionString(conn);
 }

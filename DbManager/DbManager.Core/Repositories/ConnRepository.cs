@@ -53,6 +53,14 @@ public class ConnRepository : IConnRepository
                 MongoAuthDb TEXT,
                 RedisPassword TEXT,
                 OracleServiceName TEXT,
+                UseSsh INTEGER DEFAULT 0,
+                SshHost TEXT,
+                SshPort INTEGER DEFAULT 22,
+                SshUser TEXT,
+                SshPassword TEXT,
+                SshUseKeyFile INTEGER DEFAULT 0,
+                SshKeyPath TEXT,
+                SshPassphrase TEXT,
                 CreatedTime TEXT NOT NULL,
                 UpdatedTime TEXT
             )");
@@ -95,6 +103,14 @@ public class ConnRepository : IConnRepository
             ["Color"] = "TEXT",
             ["IsFavorite"] = "INTEGER DEFAULT 0",
             ["UpdatedTime"] = "TEXT",
+            ["UseSsh"] = "INTEGER DEFAULT 0",
+            ["SshHost"] = "TEXT",
+            ["SshPort"] = "INTEGER DEFAULT 22",
+            ["SshUser"] = "TEXT",
+            ["SshPassword"] = "TEXT",
+            ["SshUseKeyFile"] = "INTEGER DEFAULT 0",
+            ["SshKeyPath"] = "TEXT",
+            ["SshPassphrase"] = "TEXT",
         };
 
         foreach (var (colName, colDef) in newColumns)
@@ -212,8 +228,8 @@ public class ConnRepository : IConnRepository
         using var conn = GetConnection();
         await conn.OpenAsync();
         return await conn.ExecuteAsync(@"
-            INSERT INTO db_connection (Name, DbType, Host, Port, UserName, Password, DbName, GroupId, Description, Color, IsFavorite, ConnectionString, SqliteFilePath, ConnectTimeout, EnableSSL, SslCertPath, MongoAuthDb, RedisPassword, OracleServiceName, CreatedTime)
-            VALUES (@Name, @DbType, @Host, @Port, @UserName, @Password, @DbName, @GroupId, @Description, @Color, @IsFavorite, @ConnectionString, @SqliteFilePath, @ConnectTimeout, @EnableSSL, @SslCertPath, @MongoAuthDb, @RedisPassword, @OracleServiceName, @CreatedTime)", connection);
+            INSERT INTO db_connection (Name, DbType, Host, Port, UserName, Password, DbName, GroupId, Description, Color, IsFavorite, ConnectionString, SqliteFilePath, ConnectTimeout, EnableSSL, SslCertPath, MongoAuthDb, RedisPassword, OracleServiceName, UseSsh, SshHost, SshPort, SshUser, SshPassword, SshUseKeyFile, SshKeyPath, SshPassphrase, CreatedTime)
+            VALUES (@Name, @DbType, @Host, @Port, @UserName, @Password, @DbName, @GroupId, @Description, @Color, @IsFavorite, @ConnectionString, @SqliteFilePath, @ConnectTimeout, @EnableSSL, @SslCertPath, @MongoAuthDb, @RedisPassword, @OracleServiceName, @UseSsh, @SshHost, @SshPort, @SshUser, @SshPassword, @SshUseKeyFile, @SshKeyPath, @SshPassphrase, @CreatedTime)", connection);
     }
 
     public async Task<int> UpdateConnectionAsync(DbConnectionModel connection)
@@ -221,7 +237,7 @@ public class ConnRepository : IConnRepository
         using var conn = GetConnection();
         await conn.OpenAsync();
         return await conn.ExecuteAsync(@"
-            UPDATE db_connection SET Name=@Name, DbType=@DbType, Host=@Host, Port=@Port, UserName=@UserName, Password=@Password, DbName=@DbName, GroupId=@GroupId, Description=@Description, Color=@Color, IsFavorite=@IsFavorite, ConnectionString=@ConnectionString, SqliteFilePath=@SqliteFilePath, ConnectTimeout=@ConnectTimeout, EnableSSL=@EnableSSL, SslCertPath=@SslCertPath, MongoAuthDb=@MongoAuthDb, RedisPassword=@RedisPassword, OracleServiceName=@OracleServiceName, UpdatedTime=@UpdatedTime
+            UPDATE db_connection SET Name=@Name, DbType=@DbType, Host=@Host, Port=@Port, UserName=@UserName, Password=@Password, DbName=@DbName, GroupId=@GroupId, Description=@Description, Color=@Color, IsFavorite=@IsFavorite, ConnectionString=@ConnectionString, SqliteFilePath=@SqliteFilePath, ConnectTimeout=@ConnectTimeout, EnableSSL=@EnableSSL, SslCertPath=@SslCertPath, MongoAuthDb=@MongoAuthDb, RedisPassword=@RedisPassword, OracleServiceName=@OracleServiceName, UseSsh=@UseSsh, SshHost=@SshHost, SshPort=@SshPort, SshUser=@SshUser, SshPassword=@SshPassword, SshUseKeyFile=@SshUseKeyFile, SshKeyPath=@SshKeyPath, SshPassphrase=@SshPassphrase, UpdatedTime=@UpdatedTime
             WHERE Id=@Id", connection);
     }
 

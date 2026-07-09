@@ -59,6 +59,20 @@ public partial class App : Application
         }
     }
 
+    protected override void OnExit(ExitEventArgs e)
+    {
+        // 释放所有 SSH 隧道，避免残留 SSH 连接与转发端口
+        try
+        {
+            SshTunnelManager.CloseAll();
+        }
+        catch
+        {
+            // 退出清理异常忽略
+        }
+        base.OnExit(e);
+    }
+
     public static void ApplyTheme(bool isDark)
     {
         var paletteHelper = new PaletteHelper();

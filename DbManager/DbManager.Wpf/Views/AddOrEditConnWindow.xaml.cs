@@ -27,6 +27,10 @@ public partial class AddOrEditConnWindow : Window
         HookPasswordBox("MongoPasswordBox", pwd => _viewModel.Connection.Password = pwd, () => _viewModel.Connection.Password);
         // Redis密码 → Connection.RedisPassword
         HookPasswordBox("RedisPasswordBox", pwd => _viewModel.Connection.RedisPassword = pwd, () => _viewModel.Connection.RedisPassword);
+        // SSH 密码 → Connection.SshPassword
+        HookPasswordBox("SshPasswordBox", pwd => _viewModel.Connection.SshPassword = pwd, () => _viewModel.Connection.SshPassword);
+        // SSH 私钥口令 → Connection.SshPassphrase
+        HookPasswordBox("SshPassphraseBox", pwd => _viewModel.Connection.SshPassphrase = pwd, () => _viewModel.Connection.SshPassphrase);
     }
 
     private void HookPasswordBox(string name, Action<string> setter, Func<string> getter)

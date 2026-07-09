@@ -65,6 +65,34 @@ public partial class DbConnectionModel : ObservableObject
     [ObservableProperty]
     private string _oracleServiceName = string.Empty;
 
+    // ===== SSH 隧道 =====
+    [ObservableProperty]
+    private bool _useSsh;
+
+    [ObservableProperty]
+    private string _sshHost = string.Empty;
+
+    [ObservableProperty]
+    private int _sshPort = 22;
+
+    [ObservableProperty]
+    private string _sshUser = string.Empty;
+
+    [ObservableProperty]
+    private string _sshPassword = string.Empty;
+
+    /// <summary>
+    /// SSH 认证方式：false=密码，true=私钥文件
+    /// </summary>
+    [ObservableProperty]
+    private bool _sshUseKeyFile;
+
+    [ObservableProperty]
+    private string _sshKeyPath = string.Empty;
+
+    [ObservableProperty]
+    private string _sshPassphrase = string.Empty;
+
     [ObservableProperty]
     private DateTime _createdTime;
 
@@ -95,6 +123,14 @@ public partial class DbConnectionModel : ObservableObject
             MongoAuthDb = MongoAuthDb,
             RedisPassword = RedisPassword,
             OracleServiceName = OracleServiceName,
+            UseSsh = UseSsh,
+            SshHost = SshHost,
+            SshPort = SshPort,
+            SshUser = SshUser,
+            SshPassword = SshPassword,
+            SshUseKeyFile = SshUseKeyFile,
+            SshKeyPath = SshKeyPath,
+            SshPassphrase = SshPassphrase,
             CreatedTime = CreatedTime,
             UpdatedTime = UpdatedTime
         };

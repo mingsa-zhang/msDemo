@@ -26,21 +26,30 @@ public class DbConnectionManageService
 
     public async Task<int> AddConnectionAsync(DbConnectionModel connection)
     {
-        if (!string.IsNullOrEmpty(connection.Password) && !PasswordEncryptHelper.IsEncrypted(connection.Password))
-            connection.Password = PasswordEncryptHelper.Encrypt(connection.Password);
-        if (!string.IsNullOrEmpty(connection.RedisPassword) && !PasswordEncryptHelper.IsEncrypted(connection.RedisPassword))
-            connection.RedisPassword = PasswordEncryptHelper.Encrypt(connection.RedisPassword);
+        EncryptSecrets(connection);
         return await _repository.AddConnectionAsync(connection);
     }
 
     public async Task<int> UpdateConnectionAsync(DbConnectionModel connection)
     {
+        EncryptSecrets(connection);
+        connection.UpdatedTime = DateTime.Now;
+        return await _repository.UpdateConnectionAsync(connection);
+    }
+
+    /// <summary>
+    /// 落库前加密各类明文凭据（已加密则跳过）。
+    /// </summary>
+    private static void EncryptSecrets(DbConnectionModel connection)
+    {
         if (!string.IsNullOrEmpty(connection.Password) && !PasswordEncryptHelper.IsEncrypted(connection.Password))
             connection.Password = PasswordEncryptHelper.Encrypt(connection.Password);
         if (!string.IsNullOrEmpty(connection.RedisPassword) && !PasswordEncryptHelper.IsEncrypted(connection.RedisPassword))
             connection.RedisPassword = PasswordEncryptHelper.Encrypt(connection.RedisPassword);
-        connection.UpdatedTime = DateTime.Now;
-        return await _repository.UpdateConnectionAsync(connection);
+        if (!string.IsNullOrEmpty(connection.SshPassword) && !PasswordEncryptHelper.IsEncrypted(connection.SshPassword))
+            connection.SshPassword = PasswordEncryptHelper.Encrypt(connection.SshPassword);
+        if (!string.IsNullOrEmpty(connection.SshPassphrase) && !PasswordEncryptHelper.IsEncrypted(connection.SshPassphrase))
+            connection.SshPassphrase = PasswordEncryptHelper.Encrypt(connection.SshPassphrase);
     }
 
     public async Task<int> DeleteConnectionAsync(int id)
