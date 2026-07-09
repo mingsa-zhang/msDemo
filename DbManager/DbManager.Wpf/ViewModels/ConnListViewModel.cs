@@ -133,6 +133,38 @@ public partial class ConnListViewModel : ObservableObject
         await _connectionService.DeleteGroupAsync(SelectedGroup.Id);
         await LoadDataAsync();
     }
+
+    [RelayCommand]
+    private async Task RenameGroup()
+    {
+        // "全部"(0) 与 "未分组"(-1) 不可重命名
+        if (SelectedGroup == null || SelectedGroup.Id <= 0)
+        {
+            Helpers.MessageTipHelper.Warning("请先选择一个可重命名的分组");
+            return;
+        }
+
+        var newName = Helpers.InputDialog.Show(
+            System.Windows.Application.Current.MainWindow,
+            "重命名分组", "请输入新的分组名称：", SelectedGroup.Name);
+        if (newName == null || newName == SelectedGroup.Name)
+        {
+            return;
+        }
+
+        var groups = await _connectionService.GetAllGroupsAsync();
+        var target = groups.FirstOrDefault(g => g.Id == SelectedGroup.Id);
+        if (target == null)
+        {
+            Helpers.MessageTipHelper.Warning("分组不存在，可能已被删除");
+            return;
+        }
+
+        target.Name = newName;
+        await _connectionService.UpdateGroupAsync(target);
+        await LoadDataAsync();
+        Helpers.MessageTipHelper.Success("分组已重命名");
+    }
 }
 
 /// <summary>
