@@ -91,14 +91,43 @@ public partial class DbTreeViewModel : ObservableObject
     [RelayCommand]
     private async Task Search()
     {
-        if (string.IsNullOrWhiteSpace(SearchText))
+        var term = SearchText?.Trim();
+        if (string.IsNullOrEmpty(term))
         {
             await RefreshTree();
             return;
         }
-        await RefreshTree();
-        var filtered = Nodes.Where(n => n.DisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        // 深度过滤当前已展开/加载的树：保留自身或后代命中的分支并展开
+        var filtered = FilterNodes(Nodes, term);
         Nodes = new ObservableCollection<DbTreeNodeViewModel>(filtered);
+    }
+
+    /// <summary>
+    /// 递归过滤：保留名称命中或含命中后代的节点。仅遍历已加载的子节点，不触发懒加载。
+    /// </summary>
+    private static List<DbTreeNodeViewModel> FilterNodes(IEnumerable<DbTreeNodeViewModel> nodes, string term)
+    {
+        var kept = new List<DbTreeNodeViewModel>();
+        foreach (var node in nodes)
+        {
+            var childKept = FilterNodes(node.Children, term);
+            var selfMatch = node.DisplayName.Contains(term, StringComparison.OrdinalIgnoreCase);
+
+            if (childKept.Count > 0)
+            {
+                // 有命中后代：仅保留命中分支并展开（这些父节点必已加载）
+                node.Children = new ObservableCollection<DbTreeNodeViewModel>(childKept);
+                node.IsExpanded = true;
+                kept.Add(node);
+            }
+            else if (selfMatch)
+            {
+                // 自身命中：保留其原有子树
+                kept.Add(node);
+            }
+        }
+        return kept;
     }
 
     internal void RequestOpenSqlQuery(int connectionId, string database)
