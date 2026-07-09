@@ -34,6 +34,7 @@ public partial class MainWindowViewModel : ObservableObject
         _treeViewModel.OpenSqlQueryRequested += (id, db) => _ = OpenSqlQueryAsync(id, db);
         _treeViewModel.OpenDataBrowserRequested += (id, db, table, schema) => _ = OpenDataBrowserAsync(id, db, table, schema);
         _treeViewModel.OpenTableDesignRequested += (id, db, table, schema) => _ = OpenTableDesignAsync(id, db, table, schema);
+        _treeViewModel.OpenNewTableRequested += (id, db, schema) => _ = OpenNewTableAsync(id, db, schema);
 
         _ = LoadConnectionCountAsync();
     }
@@ -116,6 +117,28 @@ public partial class MainWindowViewModel : ObservableObject
         };
         Tabs.Add(tabItem);
         SelectedTab = tabItem;
+    }
+
+    public async Task OpenNewTableAsync(int connectionId, string databaseName, string? schema = null)
+    {
+        var connection = await _connectionService.GetConnectionByIdAsync(connectionId);
+        if (connection == null)
+        {
+            return;
+        }
+
+        // 建表成功后刷新导航树，展示新表
+        var tabVm = new TableDesignViewModel(connection, databaseName, schema, true, () => _ = TreeViewModel.RefreshTree());
+        var tabItem = new TabItemViewModel
+        {
+            Header = "新建表",
+            IconKind = "TablePlus",
+            ContentType = TabContentType.TableDesign,
+            Content = tabVm
+        };
+        Tabs.Add(tabItem);
+        SelectedTab = tabItem;
+        TabCount = Tabs.Count;
     }
 
     [RelayCommand]

@@ -47,6 +47,11 @@ public interface IDialect
     string ConcatOperator();
 
     /// <summary>
+    /// 生成"新建表"语句（含列定义与主键约束，各库语法差异由实现处理）。
+    /// </summary>
+    string BuildCreateTable(string qualifiedTable, IReadOnlyList<CreateTableColumnSpec> columns);
+
+    /// <summary>
     /// 生成"新增列"语句。
     /// </summary>
     string BuildAddColumn(string qualifiedTable, string quotedColumn, string columnDefinition);

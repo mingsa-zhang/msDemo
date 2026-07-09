@@ -41,6 +41,43 @@ public abstract class DialectBase : IDialect
 
     // ===== DDL：默认走标准/PostgreSQL 风格，子类按需覆写 =====
 
+    /// <summary>
+    /// 标准 CREATE TABLE：逐列拼装，末尾追加 PRIMARY KEY 约束（如有主键列）。
+    /// </summary>
+    public virtual string BuildCreateTable(string qualifiedTable, IReadOnlyList<CreateTableColumnSpec> columns)
+    {
+        var lines = columns.Select(BuildCreateColumnLine).ToList();
+
+        var pkCols = columns.Where(c => c.IsPrimaryKey).Select(c => c.QuotedColumn).ToList();
+        if (pkCols.Count > 0)
+        {
+            lines.Add($"PRIMARY KEY ({string.Join(", ", pkCols)})");
+        }
+
+        return $"CREATE TABLE {qualifiedTable} (\n  {string.Join(",\n  ", lines)}\n)";
+    }
+
+    /// <summary>
+    /// 拼装单列定义：列名 类型 [NOT NULL] [自增] [DEFAULT ...]。
+    /// </summary>
+    protected string BuildCreateColumnLine(CreateTableColumnSpec col)
+    {
+        var parts = new List<string> { col.QuotedColumn, col.TypeString };
+        if (!col.IsNullable)
+        {
+            parts.Add("NOT NULL");
+        }
+        if (col.IsAutoIncrement)
+        {
+            parts.Add(AutoIncrementKeyword());
+        }
+        if (col.DefaultLiteral != null)
+        {
+            parts.Add($"DEFAULT {col.DefaultLiteral}");
+        }
+        return string.Join(" ", parts);
+    }
+
     public virtual string BuildAddColumn(string qualifiedTable, string quotedColumn, string columnDefinition)
         => $"ALTER TABLE {qualifiedTable} ADD COLUMN {quotedColumn} {columnDefinition}";
 
@@ -202,6 +239,33 @@ public sealed class SqliteDialect : DialectBase
     public override string CurrentTimeSql() => "SELECT datetime('now')";
     public override string AutoIncrementKeyword() => "AUTOINCREMENT";
     public override string ConcatOperator() => "||";
+
+    /// <summary>
+    /// SQLite 特殊性：AUTOINCREMENT 只能内联写为 INTEGER PRIMARY KEY AUTOINCREMENT，
+    /// 且此时不能再有表级 PRIMARY KEY 约束。故自增列单独内联，其余列走标准拼装。
+    /// </summary>
+    public override string BuildCreateTable(string qualifiedTable, IReadOnlyList<CreateTableColumnSpec> columns)
+    {
+        var autoInc = columns.FirstOrDefault(c => c.IsAutoIncrement);
+        if (autoInc == null)
+        {
+            return base.BuildCreateTable(qualifiedTable, columns);
+        }
+
+        var lines = new List<string>();
+        foreach (var col in columns)
+        {
+            if (col == autoInc)
+            {
+                lines.Add($"{col.QuotedColumn} INTEGER PRIMARY KEY AUTOINCREMENT");
+                continue;
+            }
+            lines.Add(BuildCreateColumnLine(col));
+        }
+
+        // 自增列已内联为主键；其余主键列不再单独约束（SQLite 单自增即主键）
+        return $"CREATE TABLE {qualifiedTable} (\n  {string.Join(",\n  ", lines)}\n)";
+    }
 
     // SQLite 不支持直接修改列（需重建表），以注释提示；执行时会跳过注释行
     public override IReadOnlyList<string> BuildAlterColumn(string qualifiedTable, ColumnAlterSpec spec)

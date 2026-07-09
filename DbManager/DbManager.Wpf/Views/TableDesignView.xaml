@@ -15,6 +15,15 @@
         <!-- 工具栏 -->
         <Border Grid.Row="0" Background="#FAFAFA" BorderBrush="#DCDCDC" BorderThickness="0,0,0,1" Padding="4,2">
             <StackPanel Orientation="Horizontal">
+                <!-- 表名输入（仅新建模式） -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                            Visibility="{Binding IsCreateMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="表名:" FontSize="11" VerticalAlignment="Center" Margin="2,0,4,0"/>
+                    <TextBox Text="{Binding TableName2, UpdateSourceTrigger=PropertyChanged}"
+                             FontSize="11" Padding="4,3" Width="160" VerticalContentAlignment="Center"
+                             materialDesign:HintAssist.Hint="新表名" materialDesign:HintAssist.IsFloating="False"/>
+                    <Separator Margin="4,2"/>
+                </StackPanel>
                 <Button ToolTip="新增字段" Command="{Binding AddColumnCommand}" Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="Plus" Width="16" Height="16" VerticalAlignment="Center"/>

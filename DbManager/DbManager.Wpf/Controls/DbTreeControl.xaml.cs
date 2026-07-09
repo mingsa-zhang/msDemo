@@ -58,7 +58,7 @@ public partial class DbTreeControl : UserControl
             TreeNodeType.View => "ViewMenu",
             TreeNodeType.Procedure => "ProcedureMenu",
             TreeNodeType.Function => "FunctionMenu",
-            TreeNodeType.TableGroup => "GroupMenu",
+            TreeNodeType.TableGroup => "TableGroupMenu",
             TreeNodeType.ViewGroup => "GroupMenu",
             TreeNodeType.ProcedureGroup => "GroupMenu",
             TreeNodeType.FunctionGroup => "GroupMenu",
@@ -174,6 +174,12 @@ public partial class DbTreeControl : UserControl
     {
         if (GetClickedNode(sender) is { } node)
             ViewModel?.RequestOpenTableDesign(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "", node.SchemaName);
+    }
+
+    private void Menu_NewTable(object sender, RoutedEventArgs e)
+    {
+        if (GetClickedNode(sender) is { } node)
+            ViewModel?.RequestOpenNewTable(node.ConnectionId, node.DatabaseName ?? "", node.SchemaName);
     }
 
     private void Menu_CopyName(object sender, RoutedEventArgs e)

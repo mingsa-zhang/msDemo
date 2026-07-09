@@ -20,6 +20,8 @@ public partial class DbTreeViewModel : ObservableObject
     public event Action<int, string>? OpenSqlQueryRequested;
     public event Action<int, string, string, string?>? OpenDataBrowserRequested;
     public event Action<int, string, string, string?>? OpenTableDesignRequested;
+    // 新建表：连接Id、库、schema
+    public event Action<int, string, string?>? OpenNewTableRequested;
 
     public DbTreeViewModel(IDbTreeNavigateService navigateService)
     {
@@ -112,6 +114,11 @@ public partial class DbTreeViewModel : ObservableObject
     internal void RequestOpenTableDesign(int connectionId, string database, string tableName, string? schema = null)
     {
         OpenTableDesignRequested?.Invoke(connectionId, database, tableName, schema);
+    }
+
+    internal void RequestOpenNewTable(int connectionId, string database, string? schema = null)
+    {
+        OpenNewTableRequested?.Invoke(connectionId, database, schema);
     }
 }
 

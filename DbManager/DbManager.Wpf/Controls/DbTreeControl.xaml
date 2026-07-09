@@ -82,6 +82,26 @@
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Header="新建表" Click="Menu_NewTable" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="TablePlus" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+
+                <!-- "表"分组节点右键菜单 -->
+                <ContextMenu x:Key="TableGroupMenu">
+                    <MenuItem Header="新建表" Click="Menu_NewTable" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="TablePlus" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <Separator/>
                     <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
                         <MenuItem.Icon>
