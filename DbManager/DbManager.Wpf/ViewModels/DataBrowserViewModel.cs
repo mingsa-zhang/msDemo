@@ -28,7 +28,10 @@ public partial class DataBrowserViewModel : ObservableObject
     private readonly IDbExecuteService _executeService;
     private readonly IDbMetadataService _metadataService;
     private readonly IDialect _dialect;
+    private readonly IDbTypeMapper _typeMapper;
     private List<string>? _primaryKeys;
+    private readonly Dictionary<string, LogicalTypeEnum> _columnTypes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, bool> _columnNullable = new(StringComparer.OrdinalIgnoreCase);
 
     [ObservableProperty] private string _header = "";
     [ObservableProperty] private string _iconKind = "TableSearch";
@@ -61,6 +64,7 @@ public partial class DataBrowserViewModel : ObservableObject
         _executeService = App.ExecuteFactory.Create(connection.DbType);
         _metadataService = App.MetadataFactory.Create(connection.DbType);
         _dialect = DialectProvider.GetDialect(connection.DbType);
+        _typeMapper = DialectProvider.GetTypeMapper(connection.DbType);
         Header = tableName;
         StatusMessage = $"{connection.Name} - {databaseName} - {tableName}";
         _ = InitializeAsync();
@@ -79,12 +83,33 @@ public partial class DataBrowserViewModel : ObservableObject
             var connectionString = DbConnStringBuilder.BuildDecryptedConnectionString(_connection);
             var columns = await _metadataService.GetColumnsAsync(connectionString, _databaseName, _tableName, _schema);
             _primaryKeys = columns.Where(c => c.IsPrimaryKey).Select(c => c.ColumnName).ToList();
+
+            // 记录各列逻辑类型与可空性，供类型化单元格编辑器选型
+            _columnTypes.Clear();
+            _columnNullable.Clear();
+            foreach (var c in columns)
+            {
+                _columnTypes[c.ColumnName] = _typeMapper.ToLogicalType(c.DataType);
+                _columnNullable[c.ColumnName] = c.IsNullable;
+            }
         }
         catch
         {
             _primaryKeys = new List<string>();
         }
     }
+
+    /// <summary>
+    /// 取列的逻辑类型（未知列返回 Unknown），供视图选择单元格编辑器。
+    /// </summary>
+    public LogicalTypeEnum GetColumnLogicalType(string columnName)
+        => _columnTypes.TryGetValue(columnName, out var t) ? t : LogicalTypeEnum.Unknown;
+
+    /// <summary>
+    /// 列是否可空（未知列按可空处理）。
+    /// </summary>
+    public bool IsColumnNullable(string columnName)
+        => !_columnNullable.TryGetValue(columnName, out var n) || n;
 
     private string GetConnectionString()
     {
