@@ -100,11 +100,31 @@ public partial class DbTreeControl : UserControl
             case TreeNodeType.View:
                 ViewModel?.RequestOpenDataBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "", node.SchemaName);
                 break;
+            case TreeNodeType.Collection:
+                // MongoDB 集合：打开文档浏览
+                ViewModel?.RequestOpenMongoBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
+                break;
             case TreeNodeType.Database:
-                ViewModel?.RequestOpenSqlQuery(node.ConnectionId, node.DatabaseName ?? "");
+                // MongoDB 库无 SQL 查询语义，双击展开即可
+                if (node.DbType == DbManager.Core.Enums.DbTypeEnum.MongoDB)
+                {
+                    node.IsExpanded = !node.IsExpanded;
+                }
+                else
+                {
+                    ViewModel?.RequestOpenSqlQuery(node.ConnectionId, node.DatabaseName ?? "");
+                }
                 break;
             case TreeNodeType.Connection:
-                node.IsExpanded = !node.IsExpanded;
+                // Redis 连接：双击打开键浏览器；其余展开
+                if (node.DbType == DbManager.Core.Enums.DbTypeEnum.Redis)
+                {
+                    ViewModel?.RequestOpenRedisBrowser(node.ConnectionId);
+                }
+                else
+                {
+                    node.IsExpanded = !node.IsExpanded;
+                }
                 break;
         }
     }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DbManager.Core.Enums;
 using DbManager.Core.Interfaces;
 using DbManager.Core.Models;
 using System.Collections.ObjectModel;
@@ -22,6 +23,10 @@ public partial class DbTreeViewModel : ObservableObject
     public event Action<int, string, string, string?>? OpenTableDesignRequested;
     // 新建表：连接Id、库、schema
     public event Action<int, string, string?>? OpenNewTableRequested;
+    // MongoDB 集合浏览：连接Id、库、集合
+    public event Action<int, string, string>? OpenMongoBrowserRequested;
+    // Redis 键浏览：连接Id
+    public event Action<int>? OpenRedisBrowserRequested;
 
     public DbTreeViewModel(IDbTreeNavigateService navigateService)
     {
@@ -149,6 +154,16 @@ public partial class DbTreeViewModel : ObservableObject
     {
         OpenNewTableRequested?.Invoke(connectionId, database, schema);
     }
+
+    internal void RequestOpenMongoBrowser(int connectionId, string database, string collection)
+    {
+        OpenMongoBrowserRequested?.Invoke(connectionId, database, collection);
+    }
+
+    internal void RequestOpenRedisBrowser(int connectionId)
+    {
+        OpenRedisBrowserRequested?.Invoke(connectionId);
+    }
 }
 
 public partial class DbTreeNodeViewModel : ObservableObject
@@ -163,6 +178,7 @@ public partial class DbTreeNodeViewModel : ObservableObject
     public string? SchemaName => _model.SchemaName;
     public string? ObjectName => _model.ObjectName;
     public TreeNodeType NodeType => _model.NodeType;
+    public DbTypeEnum DbType => _model.DbType;
     public string? IconKind => _model.IconKind;
     public string IconColor => _model.IconColor;
 
@@ -203,12 +219,27 @@ public partial class DbTreeNodeViewModel : ObservableObject
             switch (NodeType)
             {
                 case TreeNodeType.Connection:
+                    // Redis 无库/集合层级，连接节点不展开（双击打开键浏览器）
+                    if (DbType == DbTypeEnum.Redis)
+                    {
+                        IsConnected = true;
+                        Children = new ObservableCollection<DbTreeNodeViewModel>();
+                        IsLoaded = true;
+                        return;
+                    }
                     var databases = await _navigateService.GetDatabaseNodesAsync(ConnectionId);
                     children = databases.ToList();
                     IsConnected = true;
                     break;
 
                 case TreeNodeType.Database:
+                    // MongoDB：库直接展开为集合
+                    if (DbType == DbTypeEnum.MongoDB)
+                    {
+                        var collections = await _navigateService.GetCollectionNodesAsync(ConnectionId, DatabaseName!);
+                        children = collections.ToList();
+                        break;
+                    }
                     // Schema 敏感库（PG/SqlServer）先展开 Schema 层；无 Schema 概念的库直接展开对象组。
                     var schemaNodes = await _navigateService.GetSchemaNodesAsync(ConnectionId, DatabaseName!);
                     children = schemaNodes.Count > 0

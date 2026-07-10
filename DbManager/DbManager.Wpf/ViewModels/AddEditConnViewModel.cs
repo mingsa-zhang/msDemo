@@ -131,6 +131,23 @@ public partial class AddEditConnViewModel : ObservableObject
         try
         {
             var connStr = DbConnStringBuilder.BuildDecryptedConnectionString(Connection);
+
+            // MongoDB / Redis 走各自专用服务测试
+            if (Connection.DbType == DbTypeEnum.MongoDB)
+            {
+                await new MongoService().TestAsync(connStr);
+                TestResult = "MongoDB 连接成功";
+                IsTestSuccess = true;
+                return;
+            }
+            if (Connection.DbType == DbTypeEnum.Redis)
+            {
+                await new RedisService().TestAsync(connStr);
+                TestResult = "Redis 连接成功";
+                IsTestSuccess = true;
+                return;
+            }
+
             var service = App.MetadataFactory.Create(Connection.DbType);
             var databases = await service.GetDatabasesAsync(connStr);
             TestResult = $"连接成功，发现 {databases.Count} 个数据库";

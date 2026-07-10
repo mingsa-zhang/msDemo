@@ -35,6 +35,8 @@ public partial class MainWindowViewModel : ObservableObject
         _treeViewModel.OpenDataBrowserRequested += (id, db, table, schema) => _ = OpenDataBrowserAsync(id, db, table, schema);
         _treeViewModel.OpenTableDesignRequested += (id, db, table, schema) => _ = OpenTableDesignAsync(id, db, table, schema);
         _treeViewModel.OpenNewTableRequested += (id, db, schema) => _ = OpenNewTableAsync(id, db, schema);
+        _treeViewModel.OpenMongoBrowserRequested += (id, db, coll) => _ = OpenMongoBrowserAsync(id, db, coll);
+        _treeViewModel.OpenRedisBrowserRequested += id => _ = OpenRedisBrowserAsync(id);
 
         _ = LoadConnectionCountAsync();
     }
@@ -134,6 +136,48 @@ public partial class MainWindowViewModel : ObservableObject
             Header = "新建表",
             IconKind = "TablePlus",
             ContentType = TabContentType.TableDesign,
+            Content = tabVm
+        };
+        Tabs.Add(tabItem);
+        SelectedTab = tabItem;
+        TabCount = Tabs.Count;
+    }
+
+    public async Task OpenMongoBrowserAsync(int connectionId, string database, string collection)
+    {
+        var connection = await _connectionService.GetConnectionByIdAsync(connectionId);
+        if (connection == null)
+        {
+            return;
+        }
+
+        var tabVm = new MongoBrowserViewModel(connection, database, collection);
+        var tabItem = new TabItemViewModel
+        {
+            Header = collection,
+            IconKind = "FileDocumentOutline",
+            ContentType = TabContentType.MongoBrowser,
+            Content = tabVm
+        };
+        Tabs.Add(tabItem);
+        SelectedTab = tabItem;
+        TabCount = Tabs.Count;
+    }
+
+    public async Task OpenRedisBrowserAsync(int connectionId)
+    {
+        var connection = await _connectionService.GetConnectionByIdAsync(connectionId);
+        if (connection == null)
+        {
+            return;
+        }
+
+        var tabVm = new RedisBrowserViewModel(connection);
+        var tabItem = new TabItemViewModel
+        {
+            Header = $"{connection.Name} (Redis)",
+            IconKind = "LightningBolt",
+            ContentType = TabContentType.RedisBrowser,
             Content = tabVm
         };
         Tabs.Add(tabItem);
@@ -251,7 +295,9 @@ public enum TabContentType
 {
     SqlQuery,
     DataBrowser,
-    TableDesign
+    TableDesign,
+    MongoBrowser,
+    RedisBrowser
 }
 
 public class TabItemViewModel : ObservableObject

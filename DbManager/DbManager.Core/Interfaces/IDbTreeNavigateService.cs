@@ -1,3 +1,4 @@
+using DbManager.Core.Enums;
 using DbManager.Core.Models;
 
 namespace DbManager.Core.Interfaces;
@@ -14,6 +15,11 @@ public interface IDbTreeNavigateService
     Task<List<DbTreeNodeModel>> GetFunctionNodesAsync(int connectionId, string database, string? schema = null);
     Task<List<DbTreeNodeModel>> GetIndexNodesAsync(int connectionId, string database, string tableName, string? schema = null);
     Task<List<DbTreeNodeModel>> GetForeignKeyNodesAsync(int connectionId, string database, string tableName, string? schema = null);
+
+    /// <summary>
+    /// 列出 MongoDB 库下的集合节点。
+    /// </summary>
+    Task<List<DbTreeNodeModel>> GetCollectionNodesAsync(int connectionId, string database);
 
     /// <summary>
     /// 失效指定连接下的元数据缓存（单节点刷新时调用，确保重新查库）。
@@ -40,7 +46,8 @@ public enum TreeNodeType
     Procedure,
     Function,
     Index,
-    ForeignKey
+    ForeignKey,
+    Collection
 }
 
 public class DbTreeNodeModel
@@ -48,6 +55,7 @@ public class DbTreeNodeModel
     public int Id { get; set; }
     public string DisplayName { get; set; } = string.Empty;
     public TreeNodeType NodeType { get; set; }
+    public DbTypeEnum DbType { get; set; }
     public int ConnectionId { get; set; }
     public string? DatabaseName { get; set; }
     public string? SchemaName { get; set; }

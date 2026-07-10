@@ -101,6 +101,21 @@ public partial class ConnListViewModel : ObservableObject
         try
         {
             var connStr = DbManager.Core.Adapters.DbConnStringBuilder.BuildDecryptedConnectionString(SelectedConnection);
+
+            // MongoDB / Redis 走各自专用服务测试
+            if (SelectedConnection.DbType == DbManager.Core.Enums.DbTypeEnum.MongoDB)
+            {
+                await new DbManager.Core.Services.MongoService().TestAsync(connStr);
+                Helpers.MessageTipHelper.Success("MongoDB 连接成功");
+                return;
+            }
+            if (SelectedConnection.DbType == DbManager.Core.Enums.DbTypeEnum.Redis)
+            {
+                await new DbManager.Core.Services.RedisService().TestAsync(connStr);
+                Helpers.MessageTipHelper.Success("Redis 连接成功");
+                return;
+            }
+
             var service = App.MetadataFactory.Create(SelectedConnection.DbType);
             var databases = await service.GetDatabasesAsync(connStr);
             Helpers.MessageTipHelper.Success($"连接成功，发现 {databases.Count} 个数据库");

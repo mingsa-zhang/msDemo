@@ -200,6 +200,12 @@
                     <DataTemplate DataType="{x:Type viewmodels:TableDesignViewModel}">
                         <views:TableDesignView/>
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type viewmodels:MongoBrowserViewModel}">
+                        <views:MongoBrowserView/>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type viewmodels:RedisBrowserViewModel}">
+                        <views:RedisBrowserView/>
+                    </DataTemplate>
                 </Grid.Resources>
 
                 <!-- 标签页工作区 -->

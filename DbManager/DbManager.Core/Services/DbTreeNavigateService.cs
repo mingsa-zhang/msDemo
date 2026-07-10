@@ -35,6 +35,7 @@ public class DbTreeNavigateService : IDbTreeNavigateService
         {
             DisplayName = c.Name,
             NodeType = TreeNodeType.Connection,
+            DbType = c.DbType,
             ConnectionId = c.Id,
             IconKind = GetDbIcon(c.DbType),
             IconColor = GetDbIconColor(c.DbType)
@@ -46,8 +47,25 @@ public class DbTreeNavigateService : IDbTreeNavigateService
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (conn == null) return new();
 
-        var service = _metadataFactory.Create(conn.DbType);
         var connectionString = BuildDecryptedConnectionString(conn);
+
+        // MongoDB 走专用服务列库
+        if (conn.DbType == DbTypeEnum.MongoDB)
+        {
+            var mongoDbs = await _cache.GetOrAddAsync(Key(connectionId, "db"),
+                () => new MongoService().ListDatabasesAsync(connectionString));
+            return mongoDbs.Select(db => new DbTreeNodeModel
+            {
+                DisplayName = db,
+                NodeType = TreeNodeType.Database,
+                DbType = DbTypeEnum.MongoDB,
+                ConnectionId = connectionId,
+                DatabaseName = db,
+                IconKind = "Database"
+            }).ToList();
+        }
+
+        var service = _metadataFactory.Create(conn.DbType);
         var databases = await _cache.GetOrAddAsync(Key(connectionId, "db"),
             () => service.GetDatabasesAsync(connectionString));
 
@@ -55,9 +73,32 @@ public class DbTreeNavigateService : IDbTreeNavigateService
         {
             DisplayName = db,
             NodeType = TreeNodeType.Database,
+            DbType = conn.DbType,
             ConnectionId = connectionId,
             DatabaseName = db,
             IconKind = "Database"
+        }).ToList();
+    }
+
+    public async Task<List<DbTreeNodeModel>> GetCollectionNodesAsync(int connectionId, string database)
+    {
+        var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
+        if (conn == null) return new();
+
+        var connectionString = BuildDecryptedConnectionString(conn);
+        var collections = await _cache.GetOrAddAsync(Key(connectionId, "collections", database),
+            () => new MongoService().ListCollectionsAsync(connectionString, database));
+
+        return collections.Select(c => new DbTreeNodeModel
+        {
+            DisplayName = c,
+            NodeType = TreeNodeType.Collection,
+            DbType = DbTypeEnum.MongoDB,
+            ConnectionId = connectionId,
+            DatabaseName = database,
+            ObjectName = c,
+            IconKind = "FileDocumentOutline",
+            IconColor = "#47A248"
         }).ToList();
     }
 
