@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbManager.Common", "DbManag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbManager.Wpf", "DbManager.Wpf\DbManager.Wpf.csproj", "{7589247A-5B20-4EB1-BD25-0756D0AD5AAA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbManager.Tests", "DbManager.Tests\DbManager.Tests.csproj", "{D88F794C-2B65-407E-9F79-83E6A9555386}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{7589247A-5B20-4EB1-BD25-0756D0AD5AAA}.Release|x64.Build.0 = Release|Any CPU
 		{7589247A-5B20-4EB1-BD25-0756D0AD5AAA}.Release|x86.ActiveCfg = Release|Any CPU
 		{7589247A-5B20-4EB1-BD25-0756D0AD5AAA}.Release|x86.Build.0 = Release|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Debug|x64.Build.0 = Debug|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Debug|x86.Build.0 = Debug|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Release|x64.ActiveCfg = Release|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Release|x64.Build.0 = Release|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Release|x86.ActiveCfg = Release|Any CPU
+		{D88F794C-2B65-407E-9F79-83E6A9555386}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
