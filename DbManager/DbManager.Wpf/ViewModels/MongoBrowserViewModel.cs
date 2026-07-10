@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DbManager.Common;
@@ -87,6 +88,88 @@ public partial class MongoBrowserViewModel : ObservableObject
 
     [RelayCommand]
     private async Task Refresh() => await LoadAsync();
+
+    private static Window? Owner => System.Windows.Application.Current.MainWindow;
+
+    /// <summary>
+    /// 删除文档（按 _id 定位，删除前确认）。
+    /// </summary>
+    [RelayCommand]
+    private async Task DeleteDocument(string? documentJson)
+    {
+        if (string.IsNullOrWhiteSpace(documentJson))
+        {
+            return;
+        }
+        if (!MessageTipHelper.Confirm("确定删除该文档？此操作不可恢复。"))
+        {
+            return;
+        }
+
+        try
+        {
+            await _mongo.DeleteDocumentAsync(GetConnectionString(), _database, _collection, documentJson);
+            MessageTipHelper.Success("文档已删除");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"删除失败: {DbErrorTranslator.Translate(ex)}");
+        }
+    }
+
+    /// <summary>
+    /// 编辑文档（编辑 JSON 后按原 _id 替换）。
+    /// </summary>
+    [RelayCommand]
+    private async Task EditDocument(string? documentJson)
+    {
+        if (string.IsNullOrWhiteSpace(documentJson))
+        {
+            return;
+        }
+
+        var edited = TextEditDialog.Show(Owner, "编辑文档", documentJson);
+        if (edited == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _mongo.ReplaceDocumentAsync(GetConnectionString(), _database, _collection, documentJson, edited);
+            MessageTipHelper.Success("文档已更新");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"更新失败: {DbErrorTranslator.Translate(ex)}");
+        }
+    }
+
+    /// <summary>
+    /// 新增文档。
+    /// </summary>
+    [RelayCommand]
+    private async Task InsertDocument()
+    {
+        var json = TextEditDialog.Show(Owner, "新增文档", "{\n  \n}");
+        if (json == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _mongo.InsertDocumentAsync(GetConnectionString(), _database, _collection, json);
+            MessageTipHelper.Success("文档已插入");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"插入失败: {DbErrorTranslator.Translate(ex)}");
+        }
+    }
 
     /// <summary>
     /// 导出当前页文档为 JSON 数组文件。

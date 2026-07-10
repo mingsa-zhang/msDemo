@@ -70,6 +70,47 @@ public sealed class MongoService
     }
 
     /// <summary>
+    /// 按文档原始 JSON 中的 _id 删除该文档。
+    /// </summary>
+    public async Task DeleteDocumentAsync(string connectionString, string database, string collection, string documentJson)
+    {
+        var col = GetCollection(connectionString, database, collection);
+        var doc = BsonDocument.Parse(documentJson);
+        if (!doc.TryGetValue("_id", out var id))
+        {
+            throw new InvalidOperationException("文档缺少 _id，无法定位删除");
+        }
+        await col.DeleteOneAsync(new BsonDocument("_id", id));
+    }
+
+    /// <summary>
+    /// 用新 JSON 替换文档（按原文档 _id 定位）。
+    /// </summary>
+    public async Task ReplaceDocumentAsync(string connectionString, string database, string collection, string originalJson, string newJson)
+    {
+        var col = GetCollection(connectionString, database, collection);
+        var original = BsonDocument.Parse(originalJson);
+        if (!original.TryGetValue("_id", out var id))
+        {
+            throw new InvalidOperationException("原文档缺少 _id，无法定位替换");
+        }
+        var newDoc = BsonDocument.Parse(newJson);
+        await col.ReplaceOneAsync(new BsonDocument("_id", id), newDoc);
+    }
+
+    /// <summary>
+    /// 插入一篇文档。
+    /// </summary>
+    public async Task InsertDocumentAsync(string connectionString, string database, string collection, string documentJson)
+    {
+        var col = GetCollection(connectionString, database, collection);
+        await col.InsertOneAsync(BsonDocument.Parse(documentJson));
+    }
+
+    private static IMongoCollection<BsonDocument> GetCollection(string connectionString, string database, string collection)
+        => CreateClient(connectionString).GetDatabase(database).GetCollection<BsonDocument>(collection);
+
+    /// <summary>
     /// 连接测试：能列出数据库即视为成功。
     /// </summary>
     public async Task<bool> TestAsync(string connectionString)

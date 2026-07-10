@@ -53,14 +53,28 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="8,4">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="键: " FontSize="12" Foreground="#666" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding SelectedKey}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
-                        <TextBlock Text="  类型: " FontSize="12" Foreground="#666" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                        <TextBlock Text="{Binding ValueType}" FontSize="12" Foreground="#DC382D" FontWeight="Medium" VerticalAlignment="Center"/>
-                        <TextBlock Text="  TTL: " FontSize="12" Foreground="#666" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                        <TextBlock Text="{Binding TtlText}" FontSize="12" Foreground="#0277BD" FontWeight="Medium" VerticalAlignment="Center"/>
-                    </StackPanel>
+                    <DockPanel>
+                        <!-- 键操作 -->
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button ToolTip="编辑值(仅 String)" Command="{Binding EditValueCommand}" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                                <materialDesign:PackIcon Kind="PencilOutline" Width="14" Height="14"/>
+                            </Button>
+                            <Button ToolTip="设置 TTL" Command="{Binding SetTtlCommand}" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                                <materialDesign:PackIcon Kind="TimerOutline" Width="14" Height="14"/>
+                            </Button>
+                            <Button ToolTip="删除键" Command="{Binding DeleteKeyCommand}" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                                <materialDesign:PackIcon Kind="DeleteOutline" Width="14" Height="14" Foreground="#F44336"/>
+                            </Button>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="键: " FontSize="12" Foreground="#666" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedKey}" FontSize="12" FontWeight="Medium" VerticalAlignment="Center"/>
+                            <TextBlock Text="  类型: " FontSize="12" Foreground="#666" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                            <TextBlock Text="{Binding ValueType}" FontSize="12" Foreground="#DC382D" FontWeight="Medium" VerticalAlignment="Center"/>
+                            <TextBlock Text="  TTL: " FontSize="12" Foreground="#666" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                            <TextBlock Text="{Binding TtlText}" FontSize="12" Foreground="#0277BD" FontWeight="Medium" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DockPanel>
                 </Border>
                 <TextBox Grid.Row="1" Text="{Binding ValueText, Mode=OneWay}" IsReadOnly="True"
                          FontFamily="Consolas" FontSize="12.5" Padding="8"

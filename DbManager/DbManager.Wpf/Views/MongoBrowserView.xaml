@@ -19,6 +19,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Grid.Column="0" Text="{Binding FilterJson, UpdateSourceTrigger=PropertyChanged}"
                          FontSize="12" FontFamily="Consolas" Padding="4,3" Margin="0,0,4,0"
@@ -44,6 +45,10 @@
                         Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="CodeJson" Width="16" Height="16" Foreground="#607D8B"/>
                 </Button>
+                <Button Grid.Column="5" ToolTip="新增文档" Command="{Binding InsertDocumentCommand}"
+                        Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                    <materialDesign:PackIcon Kind="PlusBoxOutline" Width="16" Height="16" Foreground="#47A248"/>
+                </Button>
             </Grid>
         </Border>
 
@@ -53,10 +58,29 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="0,0,0,6" Background="#FCFCFC">
-                            <TextBox Text="{Binding Mode=OneWay}" IsReadOnly="True" BorderThickness="0"
-                                     Background="Transparent" FontFamily="Consolas" FontSize="12"
-                                     TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto"
-                                     Padding="8"/>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <!-- 文档操作 -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Right" Margin="4,2,4,0">
+                                    <Button ToolTip="编辑" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}"
+                                            Command="{Binding DataContext.EditDocumentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="PencilOutline" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button ToolTip="删除" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}"
+                                            Command="{Binding DataContext.DeleteDocumentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <materialDesign:PackIcon Kind="DeleteOutline" Width="14" Height="14" Foreground="#F44336"/>
+                                    </Button>
+                                </StackPanel>
+                                <TextBox Grid.Row="1" Text="{Binding Mode=OneWay}" IsReadOnly="True" BorderThickness="0"
+                                         Background="Transparent" FontFamily="Consolas" FontSize="12"
+                                         TextWrapping="NoWrap" HorizontalScrollBarVisibility="Auto"
+                                         Padding="8,2,8,8"/>
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

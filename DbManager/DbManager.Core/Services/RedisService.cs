@@ -114,6 +114,33 @@ public sealed class RedisService
     }
 
     /// <summary>
+    /// 删除键。
+    /// </summary>
+    public async Task<bool> DeleteKeyAsync(string connectionString, int database, string key)
+    {
+        using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        return await mux.GetDatabase(database).KeyDeleteAsync(key);
+    }
+
+    /// <summary>
+    /// 设置 String 键的值（键不存在则创建）。
+    /// </summary>
+    public async Task SetStringAsync(string connectionString, int database, string key, string value)
+    {
+        using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        await mux.GetDatabase(database).StringSetAsync(key, value);
+    }
+
+    /// <summary>
+    /// 设置或清除键的过期时间。ttl 为 null 表示持久化（移除过期）。
+    /// </summary>
+    public async Task SetTtlAsync(string connectionString, int database, string key, TimeSpan? ttl)
+    {
+        using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        await mux.GetDatabase(database).KeyExpireAsync(key, ttl);
+    }
+
+    /// <summary>
     /// 连接测试。
     /// </summary>
     public async Task<bool> TestAsync(string connectionString)
