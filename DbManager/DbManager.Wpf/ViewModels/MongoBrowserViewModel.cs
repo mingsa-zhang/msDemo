@@ -88,6 +88,40 @@ public partial class MongoBrowserViewModel : ObservableObject
     [RelayCommand]
     private async Task Refresh() => await LoadAsync();
 
+    /// <summary>
+    /// 导出当前页文档为 JSON 数组文件。
+    /// </summary>
+    [RelayCommand]
+    private void ExportJson()
+    {
+        if (Documents.Count == 0)
+        {
+            MessageTipHelper.Warning("当前无文档可导出");
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "JSON文件 (*.json)|*.json",
+            FileName = $"{_collection}.json"
+        };
+        if (dialog.ShowDialog() != true)
+        {
+            return;
+        }
+
+        try
+        {
+            var content = "[\n" + string.Join(",\n", Documents) + "\n]";
+            System.IO.File.WriteAllText(dialog.FileName, content);
+            MessageTipHelper.Success($"已导出 {Documents.Count} 篇文档");
+        }
+        catch (Exception ex)
+        {
+            MessageTipHelper.Error($"导出失败: {ex.Message}");
+        }
+    }
+
     [RelayCommand]
     private async Task PreviousPage()
     {
