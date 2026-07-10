@@ -13,7 +13,6 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly IDbTreeNavigateService _treeNavigateService;
 
     [ObservableProperty] private DbTreeViewModel _treeViewModel;
-    [ObservableProperty] private ConnListViewModel _connListViewModel;
     [ObservableProperty] private ObservableCollection<TabItemViewModel> _tabs = new();
     [ObservableProperty] private TabItemViewModel? _selectedTab;
     [ObservableProperty] private string _statusMessage = "就绪";
@@ -27,7 +26,6 @@ public partial class MainWindowViewModel : ObservableObject
         _connectionService = connectionService;
         _treeNavigateService = treeNavigateService;
         _treeViewModel = new DbTreeViewModel(treeNavigateService);
-        _connListViewModel = new ConnListViewModel(connectionService);
         _treeViewModel.MainViewModel = this;
 
         // 订阅树导航事件

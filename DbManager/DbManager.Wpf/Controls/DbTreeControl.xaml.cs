@@ -50,7 +50,7 @@ public partial class DbTreeControl : UserControl
     {
         string key = node.NodeType switch
         {
-            TreeNodeType.Group => "GroupMenu",
+            TreeNodeType.Group => "ConnGroupMenu",
             TreeNodeType.Connection => "ConnectionMenu",
             TreeNodeType.Database => "DatabaseMenu",
             TreeNodeType.Schema => "GroupMenu",
@@ -280,6 +280,165 @@ public partial class DbTreeControl : UserControl
         catch (Exception ex)
         {
             MessageBox.Show($"截断失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 顶部"新建连接"：打开连接编辑窗，关闭后刷新树。
+    /// </summary>
+    private async void Btn_NewConnection(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var window = new Views.AddOrEditConnWindow
+            {
+                DataContext = new AddEditConnViewModel(App.ConnectionService, new DbManager.Core.Models.DbConnectionModel()),
+                Owner = Window.GetWindow(this)
+            };
+            window.ShowDialog();
+            if (ViewModel != null)
+            {
+                await ViewModel.RefreshAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"新建连接失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 在指定分组下新建连接（预选该分组）。
+    /// </summary>
+    private async void Menu_NewConnectionFromGroup(object sender, RoutedEventArgs e)
+    {
+        var groupId = GetClickedNode(sender)?.Id ?? 0;
+        try
+        {
+            var model = new DbManager.Core.Models.DbConnectionModel { GroupId = groupId };
+            var window = new Views.AddOrEditConnWindow
+            {
+                DataContext = new AddEditConnViewModel(App.ConnectionService, model),
+                Owner = Window.GetWindow(this)
+            };
+            window.ShowDialog();
+            if (ViewModel != null) await ViewModel.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"新建连接失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 测试连接：按数据库类型走对应服务。
+    /// </summary>
+    private async void Menu_TestConnection(object sender, RoutedEventArgs e)
+    {
+        if (GetClickedNode(sender) is not { } node) return;
+
+        try
+        {
+            var conn = await App.ConnectionService.GetConnectionByIdAsync(node.ConnectionId);
+            if (conn == null) return;
+            var connStr = DbConnStringBuilder.BuildDecryptedConnectionString(conn);
+
+            if (conn.DbType == DbTypeEnum.MongoDB)
+            {
+                await new MongoService().TestAsync(connStr);
+                MessageBox.Show("MongoDB 连接成功", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            if (conn.DbType == DbTypeEnum.Redis)
+            {
+                await new RedisService().TestAsync(connStr);
+                MessageBox.Show("Redis 连接成功", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var metadataService = App.MetadataFactory.Create(conn.DbType);
+            var databases = await metadataService.GetDatabasesAsync(connStr);
+            MessageBox.Show($"连接成功，发现 {databases.Count} 个数据库", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"连接失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 新建分组。
+    /// </summary>
+    private async void Menu_NewGroup(object sender, RoutedEventArgs e)
+    {
+        var name = Helpers.InputDialog.Show(Window.GetWindow(this), "新建分组", "请输入分组名称：");
+        if (name == null) return;
+
+        try
+        {
+            await App.ConnectionService.AddGroupAsync(new DbManager.Core.Models.DbConnectionGroupModel { Name = name });
+            if (ViewModel != null) await ViewModel.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"新建分组失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 重命名分组。
+    /// </summary>
+    private async void Menu_RenameGroup(object sender, RoutedEventArgs e)
+    {
+        if (GetClickedNode(sender) is not { } node || node.Id <= 0) return;
+
+        var newName = Helpers.InputDialog.Show(Window.GetWindow(this), "重命名分组", "请输入新的分组名称：", node.DisplayName);
+        if (newName == null || newName == node.DisplayName) return;
+
+        try
+        {
+            var groups = await App.ConnectionService.GetAllGroupsAsync();
+            var target = groups.FirstOrDefault(g => g.Id == node.Id);
+            if (target == null)
+            {
+                MessageBox.Show("分组不存在，可能已被删除", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            target.Name = newName;
+            await App.ConnectionService.UpdateGroupAsync(target);
+            if (ViewModel != null) await ViewModel.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"重命名失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    /// <summary>
+    /// 删除分组（组内连接解组，不删连接）。
+    /// </summary>
+    private async void Menu_DeleteGroup(object sender, RoutedEventArgs e)
+    {
+        if (GetClickedNode(sender) is not { } node || node.Id <= 0) return;
+
+        var result = MessageBox.Show($"确定删除分组「{node.DisplayName}」？组内连接将变为未分组（不会删除连接）。",
+            "确认删除", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (result != MessageBoxResult.Yes) return;
+
+        try
+        {
+            await App.ConnectionService.DeleteGroupAsync(node.Id);
+            if (ViewModel != null) await ViewModel.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"删除分组失败: {DbManager.Common.DbErrorTranslator.Translate(ex)}", "错误",
+                MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 

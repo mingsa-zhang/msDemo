@@ -34,6 +34,10 @@
                         <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
                     </TextBox.InputBindings>
                 </TextBox>
+                <Button DockPanel.Dock="Right" ToolTip="新建连接" Click="Btn_NewConnection"
+                        Padding="2,0" Margin="4,0,0,0" Style="{StaticResource SmallIconButton}">
+                    <materialDesign:PackIcon Kind="DatabasePlusOutline" Width="15" Height="15"/>
+                </Button>
                 <Button DockPanel.Dock="Right" ToolTip="刷新树" Command="{Binding SearchCommand}"
                         Padding="2,0" Margin="4,0,0,0" Style="{StaticResource SmallIconButton}">
                     <materialDesign:PackIcon Kind="Refresh" Width="14" Height="14"/>
@@ -54,6 +58,11 @@
                     <MenuItem Header="新建查询" Click="Menu_NewQuery" Style="{StaticResource MenuItemStyle}">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="测试连接" Click="Menu_TestConnection" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="LanConnect" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
@@ -210,8 +219,38 @@
                     </MenuItem>
                 </ContextMenu>
 
-                <!-- 分组节点右键菜单 -->
+                <!-- 对象组（表/视图/字段等文件夹）右键菜单 -->
                 <ContextMenu x:Key="GroupMenu">
+                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+
+                <!-- 连接分组节点右键菜单 -->
+                <ContextMenu x:Key="ConnGroupMenu">
+                    <MenuItem Header="新建分组" Click="Menu_NewGroup" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="FolderPlusOutline" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="重命名分组" Click="Menu_RenameGroup" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="RenameBox" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="删除分组" Click="Menu_DeleteGroup" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="FolderRemoveOutline" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator/>
+                    <MenuItem Header="新建连接" Click="Menu_NewConnectionFromGroup" Style="{StaticResource MenuItemStyle}">
+                        <MenuItem.Icon>
+                            <materialDesign:PackIcon Kind="DatabasePlusOutline" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>

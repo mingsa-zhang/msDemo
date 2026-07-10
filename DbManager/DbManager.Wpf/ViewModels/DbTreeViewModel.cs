@@ -65,6 +65,7 @@ public partial class DbTreeViewModel : ObservableObject
 
                 var groupNode = new DbTreeNodeModel
                 {
+                    Id = group.Id,
                     DisplayName = group.Name,
                     NodeType = TreeNodeType.Group,
                     IconKind = "FolderOutline",
@@ -173,6 +174,7 @@ public partial class DbTreeNodeViewModel : ObservableObject
 
     public MainWindowViewModel? MainViewModel { get; set; }
 
+    public int Id => _model.Id;
     public int ConnectionId => _model.ConnectionId;
     public string? DatabaseName => _model.DatabaseName;
     public string? SchemaName => _model.SchemaName;

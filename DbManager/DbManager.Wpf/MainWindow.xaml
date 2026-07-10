@@ -157,32 +157,10 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- 左侧面板 -->
-            <Grid Grid.Column="0" x:Name="LeftPanel">
-                <TabControl Padding="0" FontSize="11" BorderThickness="0"
-                            Background="White" Margin="0" BorderBrush="#DCDCDC">
-                    <TabItem>
-                        <TabItem.Header>
-                            <StackPanel Orientation="Horizontal" Margin="8,4">
-                                <materialDesign:PackIcon Kind="Connection" Width="13" Height="13"
-                                                         VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                <TextBlock Text="连接" VerticalAlignment="Center" FontSize="11.5"/>
-                            </StackPanel>
-                        </TabItem.Header>
-                        <controls:DbTreeControl DataContext="{Binding TreeViewModel}"/>
-                    </TabItem>
-                    <TabItem>
-                        <TabItem.Header>
-                            <StackPanel Orientation="Horizontal" Margin="8,4">
-                                <materialDesign:PackIcon Kind="FormatListBulleted" Width="13" Height="13"
-                                                         VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                <TextBlock Text="管理" VerticalAlignment="Center" FontSize="11.5"/>
-                            </StackPanel>
-                        </TabItem.Header>
-                        <views:ConnListPage DataContext="{Binding ConnListViewModel}"/>
-                    </TabItem>
-                </TabControl>
-            </Grid>
+            <!-- 左侧面板：单一连接树 -->
+            <Border Grid.Column="0" x:Name="LeftPanel" Background="White" BorderBrush="#DCDCDC" BorderThickness="0,0,1,0">
+                <controls:DbTreeControl DataContext="{Binding TreeViewModel}"/>
+            </Border>
 
             <!-- 分割条 -->
             <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Center"
