@@ -35,6 +35,20 @@ public sealed class MongoService
     }
 
     /// <summary>
+    /// 列出集合的索引名。
+    /// </summary>
+    public async Task<List<string>> ListIndexNamesAsync(string connectionString, string database, string collection)
+    {
+        var db = CreateClient(connectionString).GetDatabase(database);
+        var col = db.GetCollection<BsonDocument>(collection);
+        using var cursor = await col.Indexes.ListAsync();
+        var indexes = await cursor.ToListAsync();
+        return indexes
+            .Select(ix => ix.TryGetValue("name", out var n) ? n.AsString : "(未命名索引)")
+            .ToList();
+    }
+
+    /// <summary>
     /// 分页查询集合文档。filterJson 为空则不过滤；返回美化后的 JSON 文档列表与总数。
     /// </summary>
     public async Task<(List<string> Docs, long Total)> QueryAsync(

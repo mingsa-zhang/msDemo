@@ -285,6 +285,12 @@ public partial class DbTreeNodeViewModel : ObservableObject
                     };
                     break;
 
+                case TreeNodeType.Collection:
+                    // MongoDB 集合展开为索引列表（只读）
+                    var collIndexes = await _navigateService.GetCollectionIndexNodesAsync(ConnectionId, DatabaseName!, ObjectName!);
+                    children = collIndexes.ToList();
+                    break;
+
                 case TreeNodeType.ColumnGroup:
                     var colNodes = await _navigateService.GetColumnNodesAsync(ConnectionId, DatabaseName!, ObjectName!, SchemaName);
                     foreach (var c in colNodes) { c.IconKind = "TextBoxOutline"; c.IconColor = "#607D8B"; }

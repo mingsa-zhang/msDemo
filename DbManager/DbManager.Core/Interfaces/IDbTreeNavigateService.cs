@@ -22,6 +22,11 @@ public interface IDbTreeNavigateService
     Task<List<DbTreeNodeModel>> GetCollectionNodesAsync(int connectionId, string database);
 
     /// <summary>
+    /// 列出 MongoDB 集合的索引节点。
+    /// </summary>
+    Task<List<DbTreeNodeModel>> GetCollectionIndexNodesAsync(int connectionId, string database, string collection);
+
+    /// <summary>
     /// 失效指定连接下的元数据缓存（单节点刷新时调用，确保重新查库）。
     /// </summary>
     void InvalidateConnection(int connectionId);

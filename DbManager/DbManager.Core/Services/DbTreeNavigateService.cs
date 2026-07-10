@@ -102,6 +102,28 @@ public class DbTreeNavigateService : IDbTreeNavigateService
         }).ToList();
     }
 
+    public async Task<List<DbTreeNodeModel>> GetCollectionIndexNodesAsync(int connectionId, string database, string collection)
+    {
+        var conn = await _connectionService.GetConnectionByIdAsync(connectionId);
+        if (conn == null) return new();
+
+        var connectionString = BuildDecryptedConnectionString(conn);
+        var indexes = await _cache.GetOrAddAsync(Key(connectionId, "mongoidx", database, null, collection),
+            () => new MongoService().ListIndexNamesAsync(connectionString, database, collection));
+
+        return indexes.Select(idx => new DbTreeNodeModel
+        {
+            DisplayName = idx,
+            NodeType = TreeNodeType.Index,
+            DbType = DbTypeEnum.MongoDB,
+            ConnectionId = connectionId,
+            DatabaseName = database,
+            ObjectName = collection,
+            IconKind = "KeyVariant",
+            IconColor = "#FF9800"
+        }).ToList();
+    }
+
     public async Task<List<DbTreeNodeModel>> GetSchemaNodesAsync(int connectionId, string database)
     {
         var conn = await _connectionService.GetConnectionByIdAsync(connectionId);

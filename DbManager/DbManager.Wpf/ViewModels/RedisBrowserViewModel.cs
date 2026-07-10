@@ -26,6 +26,7 @@ public partial class RedisBrowserViewModel : ObservableObject
     [ObservableProperty] private string? _selectedKey;
     [ObservableProperty] private string _valueType = string.Empty;
     [ObservableProperty] private string _valueText = string.Empty;
+    [ObservableProperty] private string _ttlText = string.Empty;
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _statusMessage = string.Empty;
 
@@ -75,13 +76,15 @@ public partial class RedisBrowserViewModel : ObservableObject
     {
         try
         {
-            var (type, text) = await _redis.GetValueAsync(GetConnectionString(), Database, key);
-            ValueType = type;
-            ValueText = text;
+            var info = await _redis.GetValueAsync(GetConnectionString(), Database, key);
+            ValueType = info.Type;
+            ValueText = info.Value;
+            TtlText = info.Ttl;
         }
         catch (Exception ex)
         {
             ValueType = string.Empty;
+            TtlText = string.Empty;
             ValueText = $"读取失败: {DbErrorTranslator.Translate(ex)}";
         }
     }

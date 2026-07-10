@@ -4,6 +4,27 @@ using StackExchange.Redis;
 namespace DbManager.Core.Services;
 
 /// <summary>
+/// Redis 键值读取结果：类型、格式化文本值、TTL。
+/// </summary>
+public sealed class RedisValueInfo
+{
+    /// <summary>
+    /// Redis 类型名（string/hash/list/set/zset）
+    /// </summary>
+    public string Type { get; init; } = string.Empty;
+
+    /// <summary>
+    /// 按类型格式化的文本值
+    /// </summary>
+    public string Value { get; init; } = string.Empty;
+
+    /// <summary>
+    /// 剩余存活时间（"永久" 或人类可读时长）
+    /// </summary>
+    public string Ttl { get; init; } = string.Empty;
+}
+
+/// <summary>
 /// Redis 只读访问服务：按模式扫描键、按类型读取并格式化值。
 /// 直接使用 StackExchange.Redis，不经关系型的元数据/执行工厂。
 /// </summary>
@@ -37,9 +58,9 @@ public sealed class RedisService
     }
 
     /// <summary>
-    /// 读取键值：返回 Redis 类型名与按类型格式化的文本。
+    /// 读取键值：返回 Redis 类型名、按类型格式化的文本、剩余存活时间。
     /// </summary>
-    public async Task<(string Type, string Value)> GetValueAsync(string connectionString, int database, string key)
+    public async Task<RedisValueInfo> GetValueAsync(string connectionString, int database, string key)
     {
         using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
         var db = mux.GetDatabase(database);
@@ -56,7 +77,39 @@ public sealed class RedisService
             _ => "(不支持展示的类型)"
         };
 
-        return (type.ToString(), value);
+        var ttl = await db.KeyTimeToLiveAsync(key);
+        return new RedisValueInfo
+        {
+            Type = type.ToString(),
+            Value = value,
+            Ttl = FormatTtl(ttl)
+        };
+    }
+
+    /// <summary>
+    /// 格式化 TTL：null 表示永久（未设置过期）。
+    /// </summary>
+    private static string FormatTtl(TimeSpan? ttl)
+    {
+        if (ttl == null)
+        {
+            return "永久";
+        }
+
+        var total = ttl.Value;
+        if (total.TotalSeconds < 60)
+        {
+            return $"{(int)total.TotalSeconds}s";
+        }
+        if (total.TotalMinutes < 60)
+        {
+            return $"{(int)total.TotalMinutes}m{total.Seconds}s";
+        }
+        if (total.TotalHours < 24)
+        {
+            return $"{(int)total.TotalHours}h{total.Minutes}m";
+        }
+        return $"{(int)total.TotalDays}d{total.Hours}h";
     }
 
     /// <summary>
