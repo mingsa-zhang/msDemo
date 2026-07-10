@@ -18,6 +18,9 @@ public partial class AddEditConnViewModel : ObservableObject
     [ObservableProperty] private DbConnectionModel _connection;
     [ObservableProperty] private string _windowTitle = "新建连接";
     [ObservableProperty] private bool _isRelational = true;
+    [ObservableProperty] private bool _isMySqlFamily = true;
+    [ObservableProperty] private bool _isSqlServer;
+    [ObservableProperty] private bool _isPostgreSql;
     [ObservableProperty] private bool _isSQLite;
     [ObservableProperty] private bool _isOracle;
     [ObservableProperty] private bool _isMongoDB;
@@ -97,6 +100,9 @@ public partial class AddEditConnViewModel : ObservableObject
     {
         IsRelational = Connection.DbType is DbTypeEnum.MySql or DbTypeEnum.MariaDB
             or DbTypeEnum.SqlServer or DbTypeEnum.PostgreSQL or DbTypeEnum.DB2;
+        IsMySqlFamily = Connection.DbType is DbTypeEnum.MySql or DbTypeEnum.MariaDB;
+        IsSqlServer = Connection.DbType == DbTypeEnum.SqlServer;
+        IsPostgreSql = Connection.DbType == DbTypeEnum.PostgreSQL;
         IsSQLite = Connection.DbType == DbTypeEnum.SQLite;
         IsOracle = Connection.DbType == DbTypeEnum.Oracle;
         IsMongoDB = Connection.DbType == DbTypeEnum.MongoDB;
@@ -108,20 +114,33 @@ public partial class AddEditConnViewModel : ObservableObject
             : $"{Connection.DbType} 尚在开发中，暂不支持连接，敬请期待。";
     }
 
+    private static readonly int[] KnownDefaultPorts =
+    {
+        AppConst.DefaultMySqlPort, AppConst.DefaultSqlServerPort, AppConst.DefaultPostgreSqlPort,
+        AppConst.DefaultOraclePort, AppConst.DefaultMongoDbPort, AppConst.DefaultRedisPort, AppConst.DefaultDb2Port
+    };
+
+    private static int DefaultPortFor(DbTypeEnum dbType) => dbType switch
+    {
+        DbTypeEnum.MySql or DbTypeEnum.MariaDB => AppConst.DefaultMySqlPort,
+        DbTypeEnum.SqlServer => AppConst.DefaultSqlServerPort,
+        DbTypeEnum.PostgreSQL => AppConst.DefaultPostgreSqlPort,
+        DbTypeEnum.Oracle => AppConst.DefaultOraclePort,
+        DbTypeEnum.MongoDB => AppConst.DefaultMongoDbPort,
+        DbTypeEnum.Redis => AppConst.DefaultRedisPort,
+        DbTypeEnum.DB2 => AppConst.DefaultDb2Port,
+        _ => 0
+    };
+
+    /// <summary>
+    /// 端口为空、或仍是某库默认端口（视为自动填的、非用户特意设置）时，随当前库类型更新为其默认端口。
+    /// </summary>
     private void AutoFillDefaultPort()
     {
-        if (Connection.Port > 0) return;
-        Connection.Port = Connection.DbType switch
+        if (Connection.Port == 0 || KnownDefaultPorts.Contains(Connection.Port))
         {
-            DbTypeEnum.MySql or DbTypeEnum.MariaDB => AppConst.DefaultMySqlPort,
-            DbTypeEnum.SqlServer => AppConst.DefaultSqlServerPort,
-            DbTypeEnum.PostgreSQL => AppConst.DefaultPostgreSqlPort,
-            DbTypeEnum.Oracle => AppConst.DefaultOraclePort,
-            DbTypeEnum.MongoDB => AppConst.DefaultMongoDbPort,
-            DbTypeEnum.Redis => AppConst.DefaultRedisPort,
-            DbTypeEnum.DB2 => AppConst.DefaultDb2Port,
-            _ => 0
-        };
+            Connection.Port = DefaultPortFor(Connection.DbType);
+        }
     }
 
     [RelayCommand]

@@ -61,6 +61,16 @@ public class ConnRepository : IConnRepository
                 SshUseKeyFile INTEGER DEFAULT 0,
                 SshKeyPath TEXT,
                 SshPassphrase TEXT,
+                Charset TEXT,
+                UseIntegratedSecurity INTEGER DEFAULT 0,
+                InstanceName TEXT,
+                PgSchema TEXT,
+                PgSslMode TEXT,
+                OracleUseSid INTEGER DEFAULT 0,
+                RedisDatabase INTEGER DEFAULT 0,
+                MongoReplicaSet TEXT,
+                MongoDirectConnection INTEGER DEFAULT 0,
+                SqliteReadOnly INTEGER DEFAULT 0,
                 CreatedTime TEXT NOT NULL,
                 UpdatedTime TEXT
             )");
@@ -111,6 +121,16 @@ public class ConnRepository : IConnRepository
             ["SshUseKeyFile"] = "INTEGER DEFAULT 0",
             ["SshKeyPath"] = "TEXT",
             ["SshPassphrase"] = "TEXT",
+            ["Charset"] = "TEXT",
+            ["UseIntegratedSecurity"] = "INTEGER DEFAULT 0",
+            ["InstanceName"] = "TEXT",
+            ["PgSchema"] = "TEXT",
+            ["PgSslMode"] = "TEXT",
+            ["OracleUseSid"] = "INTEGER DEFAULT 0",
+            ["RedisDatabase"] = "INTEGER DEFAULT 0",
+            ["MongoReplicaSet"] = "TEXT",
+            ["MongoDirectConnection"] = "INTEGER DEFAULT 0",
+            ["SqliteReadOnly"] = "INTEGER DEFAULT 0",
         };
 
         foreach (var (colName, colDef) in newColumns)
@@ -228,8 +248,8 @@ public class ConnRepository : IConnRepository
         using var conn = GetConnection();
         await conn.OpenAsync();
         return await conn.ExecuteAsync(@"
-            INSERT INTO db_connection (Name, DbType, Host, Port, UserName, Password, DbName, GroupId, Description, Color, IsFavorite, ConnectionString, SqliteFilePath, ConnectTimeout, EnableSSL, SslCertPath, MongoAuthDb, RedisPassword, OracleServiceName, UseSsh, SshHost, SshPort, SshUser, SshPassword, SshUseKeyFile, SshKeyPath, SshPassphrase, CreatedTime)
-            VALUES (@Name, @DbType, @Host, @Port, @UserName, @Password, @DbName, @GroupId, @Description, @Color, @IsFavorite, @ConnectionString, @SqliteFilePath, @ConnectTimeout, @EnableSSL, @SslCertPath, @MongoAuthDb, @RedisPassword, @OracleServiceName, @UseSsh, @SshHost, @SshPort, @SshUser, @SshPassword, @SshUseKeyFile, @SshKeyPath, @SshPassphrase, @CreatedTime)", connection);
+            INSERT INTO db_connection (Name, DbType, Host, Port, UserName, Password, DbName, GroupId, Description, Color, IsFavorite, ConnectionString, SqliteFilePath, ConnectTimeout, EnableSSL, SslCertPath, MongoAuthDb, RedisPassword, OracleServiceName, UseSsh, SshHost, SshPort, SshUser, SshPassword, SshUseKeyFile, SshKeyPath, SshPassphrase, Charset, UseIntegratedSecurity, InstanceName, PgSchema, PgSslMode, OracleUseSid, RedisDatabase, MongoReplicaSet, MongoDirectConnection, SqliteReadOnly, CreatedTime)
+            VALUES (@Name, @DbType, @Host, @Port, @UserName, @Password, @DbName, @GroupId, @Description, @Color, @IsFavorite, @ConnectionString, @SqliteFilePath, @ConnectTimeout, @EnableSSL, @SslCertPath, @MongoAuthDb, @RedisPassword, @OracleServiceName, @UseSsh, @SshHost, @SshPort, @SshUser, @SshPassword, @SshUseKeyFile, @SshKeyPath, @SshPassphrase, @Charset, @UseIntegratedSecurity, @InstanceName, @PgSchema, @PgSslMode, @OracleUseSid, @RedisDatabase, @MongoReplicaSet, @MongoDirectConnection, @SqliteReadOnly, @CreatedTime)", connection);
     }
 
     public async Task<int> UpdateConnectionAsync(DbConnectionModel connection)
@@ -237,7 +257,7 @@ public class ConnRepository : IConnRepository
         using var conn = GetConnection();
         await conn.OpenAsync();
         return await conn.ExecuteAsync(@"
-            UPDATE db_connection SET Name=@Name, DbType=@DbType, Host=@Host, Port=@Port, UserName=@UserName, Password=@Password, DbName=@DbName, GroupId=@GroupId, Description=@Description, Color=@Color, IsFavorite=@IsFavorite, ConnectionString=@ConnectionString, SqliteFilePath=@SqliteFilePath, ConnectTimeout=@ConnectTimeout, EnableSSL=@EnableSSL, SslCertPath=@SslCertPath, MongoAuthDb=@MongoAuthDb, RedisPassword=@RedisPassword, OracleServiceName=@OracleServiceName, UseSsh=@UseSsh, SshHost=@SshHost, SshPort=@SshPort, SshUser=@SshUser, SshPassword=@SshPassword, SshUseKeyFile=@SshUseKeyFile, SshKeyPath=@SshKeyPath, SshPassphrase=@SshPassphrase, UpdatedTime=@UpdatedTime
+            UPDATE db_connection SET Name=@Name, DbType=@DbType, Host=@Host, Port=@Port, UserName=@UserName, Password=@Password, DbName=@DbName, GroupId=@GroupId, Description=@Description, Color=@Color, IsFavorite=@IsFavorite, ConnectionString=@ConnectionString, SqliteFilePath=@SqliteFilePath, ConnectTimeout=@ConnectTimeout, EnableSSL=@EnableSSL, SslCertPath=@SslCertPath, MongoAuthDb=@MongoAuthDb, RedisPassword=@RedisPassword, OracleServiceName=@OracleServiceName, UseSsh=@UseSsh, SshHost=@SshHost, SshPort=@SshPort, SshUser=@SshUser, SshPassword=@SshPassword, SshUseKeyFile=@SshUseKeyFile, SshKeyPath=@SshKeyPath, SshPassphrase=@SshPassphrase, Charset=@Charset, UseIntegratedSecurity=@UseIntegratedSecurity, InstanceName=@InstanceName, PgSchema=@PgSchema, PgSslMode=@PgSslMode, OracleUseSid=@OracleUseSid, RedisDatabase=@RedisDatabase, MongoReplicaSet=@MongoReplicaSet, MongoDirectConnection=@MongoDirectConnection, SqliteReadOnly=@SqliteReadOnly, UpdatedTime=@UpdatedTime
             WHERE Id=@Id", connection);
     }
 

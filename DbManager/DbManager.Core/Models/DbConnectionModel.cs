@@ -65,6 +65,67 @@ public partial class DbConnectionModel : ObservableObject
     [ObservableProperty]
     private string _oracleServiceName = string.Empty;
 
+    // ===== 各库专属连接项 =====
+    /// <summary>
+    /// MySQL/MariaDB 字符集
+    /// </summary>
+    [ObservableProperty]
+    private string _charset = string.Empty;
+
+    /// <summary>
+    /// SqlServer 使用 Windows 集成认证
+    /// </summary>
+    [ObservableProperty]
+    private bool _useIntegratedSecurity;
+
+    /// <summary>
+    /// SqlServer 命名实例（host\instance）
+    /// </summary>
+    [ObservableProperty]
+    private string _instanceName = string.Empty;
+
+    /// <summary>
+    /// PostgreSQL 默认 schema（search_path）
+    /// </summary>
+    [ObservableProperty]
+    private string _pgSchema = string.Empty;
+
+    /// <summary>
+    /// PostgreSQL SSL 模式（Disable/Prefer/Require）
+    /// </summary>
+    [ObservableProperty]
+    private string _pgSslMode = string.Empty;
+
+    /// <summary>
+    /// Oracle 用 SID（否则用 Service Name）
+    /// </summary>
+    [ObservableProperty]
+    private bool _oracleUseSid;
+
+    /// <summary>
+    /// Redis 库序号（0-15）
+    /// </summary>
+    [ObservableProperty]
+    private int _redisDatabase;
+
+    /// <summary>
+    /// MongoDB 副本集名
+    /// </summary>
+    [ObservableProperty]
+    private string _mongoReplicaSet = string.Empty;
+
+    /// <summary>
+    /// MongoDB 直连
+    /// </summary>
+    [ObservableProperty]
+    private bool _mongoDirectConnection;
+
+    /// <summary>
+    /// SQLite 只读模式
+    /// </summary>
+    [ObservableProperty]
+    private bool _sqliteReadOnly;
+
     // ===== SSH 隧道 =====
     [ObservableProperty]
     private bool _useSsh;
@@ -123,6 +184,16 @@ public partial class DbConnectionModel : ObservableObject
             MongoAuthDb = MongoAuthDb,
             RedisPassword = RedisPassword,
             OracleServiceName = OracleServiceName,
+            Charset = Charset,
+            UseIntegratedSecurity = UseIntegratedSecurity,
+            InstanceName = InstanceName,
+            PgSchema = PgSchema,
+            PgSslMode = PgSslMode,
+            OracleUseSid = OracleUseSid,
+            RedisDatabase = RedisDatabase,
+            MongoReplicaSet = MongoReplicaSet,
+            MongoDirectConnection = MongoDirectConnection,
+            SqliteReadOnly = SqliteReadOnly,
             UseSsh = UseSsh,
             SshHost = SshHost,
             SshPort = SshPort,

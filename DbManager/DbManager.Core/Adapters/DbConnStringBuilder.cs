@@ -132,6 +132,7 @@ public static class DbConnStringBuilder
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultMySqlPort;
         var sb = $"Server={conn.Host};Port={port};Database={conn.DbName};Uid={conn.UserName};Pwd={EscapeValue(conn.Password)};";
         if (conn.ConnectTimeout > 0) sb += $"ConnectionTimeout={conn.ConnectTimeout};";
+        if (!string.IsNullOrEmpty(conn.Charset)) sb += $"CharSet={conn.Charset};";
         if (conn.EnableSSL) sb += "SslMode=Required;";
         return sb;
     }
@@ -139,7 +140,19 @@ public static class DbConnStringBuilder
     private static string BuildSqlServer(DbConnectionModel conn)
     {
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultSqlServerPort;
-        var sb = $"Server={conn.Host},{port};Database={conn.DbName};User Id={conn.UserName};Password={EscapeValue(conn.Password)};";
+        // 命名实例时用 host\instance（不带端口）；否则 host,port
+        var server = !string.IsNullOrEmpty(conn.InstanceName)
+            ? $"{conn.Host}\\{conn.InstanceName}"
+            : $"{conn.Host},{port}";
+        var sb = $"Server={server};Database={conn.DbName};";
+        if (conn.UseIntegratedSecurity)
+        {
+            sb += "Integrated Security=True;";
+        }
+        else
+        {
+            sb += $"User Id={conn.UserName};Password={EscapeValue(conn.Password)};";
+        }
         if (conn.ConnectTimeout > 0) sb += $"Connection Timeout={conn.ConnectTimeout};";
         if (conn.EnableSSL) sb += "Encrypt=True;TrustServerCertificate=True;";
         return sb;
@@ -150,7 +163,10 @@ public static class DbConnStringBuilder
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultPostgreSqlPort;
         var sb = $"Host={conn.Host};Port={port};Database={conn.DbName};Username={conn.UserName};Password={EscapeValue(conn.Password)};";
         if (conn.ConnectTimeout > 0) sb += $"Timeout={conn.ConnectTimeout};";
-        if (conn.EnableSSL) sb += "SSL Mode=Require;Trust Server Certificate=true;";
+        if (!string.IsNullOrEmpty(conn.PgSchema)) sb += $"Search Path={conn.PgSchema};";
+        // 显式 SSL 模式优先；否则回退到 EnableSSL 默认
+        if (!string.IsNullOrEmpty(conn.PgSslMode)) sb += $"SSL Mode={conn.PgSslMode};Trust Server Certificate=true;";
+        else if (conn.EnableSSL) sb += "SSL Mode=Require;Trust Server Certificate=true;";
         return sb;
     }
 
@@ -158,7 +174,8 @@ public static class DbConnStringBuilder
     {
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultOraclePort;
         var serviceName = !string.IsNullOrEmpty(conn.OracleServiceName) ? conn.OracleServiceName : (!string.IsNullOrEmpty(conn.DbName) ? conn.DbName : "ORCL");
-        var sb = $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={conn.Host})(PORT={port}))(CONNECT_DATA=(SERVICE_NAME={serviceName})));User Id={conn.UserName};Password={EscapeValue(conn.Password)};";
+        var connectData = conn.OracleUseSid ? $"(SID={serviceName})" : $"(SERVICE_NAME={serviceName})";
+        var sb = $"Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST={conn.Host})(PORT={port}))(CONNECT_DATA={connectData}));User Id={conn.UserName};Password={EscapeValue(conn.Password)};";
         if (conn.ConnectTimeout > 0) sb += $"Connection Timeout={conn.ConnectTimeout};";
         return sb;
     }
@@ -167,7 +184,9 @@ public static class DbConnStringBuilder
     {
         var filePath = !string.IsNullOrEmpty(conn.SqliteFilePath) ? conn.SqliteFilePath : (!string.IsNullOrEmpty(conn.DbName) ? conn.DbName : "data.db");
         var timeout = conn.ConnectTimeout > 0 ? conn.ConnectTimeout * 1000 : 30000;
-        return $"Data Source={filePath};BusyTimeout={timeout};";
+        var sb = $"Data Source={filePath};BusyTimeout={timeout};";
+        if (conn.SqliteReadOnly) sb += "Mode=ReadOnly;";
+        return sb;
     }
 
     private static string BuildMongoDb(DbConnectionModel conn)
@@ -177,6 +196,8 @@ public static class DbConnStringBuilder
         var encodedUser = Uri.EscapeDataString(conn.UserName ?? "");
         var encodedPwd = Uri.EscapeDataString(conn.Password ?? "");
         var sb = $"mongodb://{encodedUser}:{encodedPwd}@{conn.Host}:{port}/{conn.DbName}?authSource={authDb}";
+        if (!string.IsNullOrEmpty(conn.MongoReplicaSet)) sb += $"&replicaSet={Uri.EscapeDataString(conn.MongoReplicaSet)}";
+        if (conn.MongoDirectConnection) sb += "&directConnection=true";
         if (conn.EnableSSL) sb += "&ssl=true";
         return sb;
     }
@@ -186,8 +207,11 @@ public static class DbConnStringBuilder
         var port = conn.Port > 0 ? conn.Port : AppConst.DefaultRedisPort;
         var password = !string.IsNullOrEmpty(conn.RedisPassword) ? conn.RedisPassword : conn.Password;
         var sb = $"{conn.Host}:{port}";
+        if (!string.IsNullOrEmpty(conn.UserName)) sb += $",user={conn.UserName}";
         if (!string.IsNullOrEmpty(password)) sb += $",password={password}";
+        if (conn.RedisDatabase > 0) sb += $",defaultDatabase={conn.RedisDatabase}";
         if (conn.ConnectTimeout > 0) sb += $",connectTimeout={conn.ConnectTimeout * 1000}";
+        if (conn.EnableSSL) sb += ",ssl=true";
         return sb;
     }
 

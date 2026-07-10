@@ -178,17 +178,73 @@
                     </Grid>
                 </Border>
 
-                <!-- ===== SQLite ===== -->
-                <Border Style="{StaticResource SectionCard}" Visibility="{Binding IsSQLite, Converter={StaticResource BoolToVisibilityConverter}}">
+                <!-- MySQL/MariaDB 专属 -->
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding IsMySqlFamily, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="文件路径" Style="{StaticResource RowLabel}"/>
-                        <TextBox Grid.Column="1" Text="{Binding Connection.SqliteFilePath, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
-                                 materialDesign:HintAssist.Hint="数据库文件的完整路径" materialDesign:HintAssist.IsFloating="False"/>
+                        <TextBlock Grid.Column="0" Text="字符集" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Column="1" Text="{Binding Connection.Charset, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
+                                 materialDesign:HintAssist.Hint="如 utf8mb4（可留空用默认）" materialDesign:HintAssist.IsFloating="False"/>
                     </Grid>
+                </Border>
+
+                <!-- SqlServer 专属 -->
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding IsSqlServer, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <CheckBox Content="Windows 集成认证（勾选后忽略用户名/密码）" IsChecked="{Binding Connection.UseIntegratedSecurity}" Margin="0,0,0,8" FontSize="12.5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="实例名" Style="{StaticResource RowLabel}"/>
+                            <TextBox Grid.Column="1" Text="{Binding Connection.InstanceName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
+                                     materialDesign:HintAssist.Hint="命名实例（可留空，如 SQLEXPRESS）" materialDesign:HintAssist.IsFloating="False"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- PostgreSQL 专属 -->
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding IsPostgreSql, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Schema" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Connection.PgSchema, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
+                                 materialDesign:HintAssist.Hint="默认 schema（可留空，如 public）" materialDesign:HintAssist.IsFloating="False"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="SSL 模式" Style="{StaticResource RowLabel}"/>
+                        <ComboBox Grid.Row="1" Grid.Column="1" SelectedValue="{Binding Connection.PgSslMode}" SelectedValuePath="Content" Style="{StaticResource InputCombo}">
+                            <ComboBoxItem Content=""/>
+                            <ComboBoxItem Content="Disable"/>
+                            <ComboBoxItem Content="Prefer"/>
+                            <ComboBoxItem Content="Require"/>
+                        </ComboBox>
+                    </Grid>
+                </Border>
+
+                <!-- ===== SQLite ===== -->
+                <Border Style="{StaticResource SectionCard}" Visibility="{Binding IsSQLite, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="文件路径" Style="{StaticResource RowLabel}"/>
+                            <TextBox Grid.Column="1" Text="{Binding Connection.SqliteFilePath, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
+                                     materialDesign:HintAssist.Hint="数据库文件的完整路径" materialDesign:HintAssist.IsFloating="False"/>
+                        </Grid>
+                        <CheckBox Content="只读模式" IsChecked="{Binding Connection.SqliteReadOnly}" Margin="0,0,0,4" FontSize="12.5"/>
+                    </StackPanel>
                 </Border>
 
                 <!-- ===== Oracle ===== -->
@@ -205,6 +261,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="主机" Style="{StaticResource RowLabel}"/>
                         <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Connection.Host, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
@@ -214,9 +271,11 @@
                         <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Connection.UserName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
                         <TextBlock Grid.Row="2" Grid.Column="0" Text="密码" Style="{StaticResource RowLabel}"/>
                         <PasswordBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Name="OraclePasswordBox" Style="{StaticResource InputPassword}"/>
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="服务名" Style="{StaticResource RowLabel}"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="标识符" Style="{StaticResource RowLabel}"/>
                         <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Connection.OracleServiceName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
-                                 materialDesign:HintAssist.Hint="Service Name（如 ORCL）" materialDesign:HintAssist.IsFloating="False"/>
+                                 materialDesign:HintAssist.Hint="Service Name 或 SID（如 ORCL）" materialDesign:HintAssist.IsFloating="False"/>
+                        <CheckBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Content="按 SID 连接（不勾选=Service Name）"
+                                  IsChecked="{Binding Connection.OracleUseSid}" Margin="0,0,0,4" FontSize="12.5"/>
                     </Grid>
                 </Border>
 
@@ -230,6 +289,8 @@
                             <ColumnDefinition Width="78"/>
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
@@ -249,6 +310,11 @@
                                  materialDesign:HintAssist.Hint="认证数据库（默认 admin）" materialDesign:HintAssist.IsFloating="False"/>
                         <TextBlock Grid.Row="4" Grid.Column="0" Text="数据库" Style="{StaticResource RowLabel}"/>
                         <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Connection.DbName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="副本集" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3" Text="{Binding Connection.MongoReplicaSet, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
+                                 materialDesign:HintAssist.Hint="replicaSet 名（可留空）" materialDesign:HintAssist.IsFloating="False"/>
+                        <CheckBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3" Content="直连（directConnection）"
+                                  IsChecked="{Binding Connection.MongoDirectConnection}" Margin="0,0,0,4" FontSize="12.5"/>
                     </Grid>
                 </Border>
 
@@ -264,13 +330,20 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="主机" Style="{StaticResource RowLabel}"/>
                         <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Connection.Host, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="端口" Style="{StaticResource RowLabel}" Margin="14,0,10,8"/>
-                        <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Connection.Port, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="密码" Style="{StaticResource RowLabel}"/>
-                        <PasswordBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Name="RedisPasswordBox" Style="{StaticResource InputPassword}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="库" Style="{StaticResource RowLabel}" Margin="14,0,10,8"/>
+                        <TextBox Grid.Row="0" Grid.Column="3" Text="{Binding Connection.RedisDatabase, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
+                                 materialDesign:HintAssist.Hint="0-15" materialDesign:HintAssist.IsFloating="False"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="端口" Style="{StaticResource RowLabel}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Connection.Port, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="用户" Style="{StaticResource RowLabel}" Margin="14,0,10,8"/>
+                        <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding Connection.UserName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"
+                                 materialDesign:HintAssist.Hint="ACL" materialDesign:HintAssist.IsFloating="False"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="密码" Style="{StaticResource RowLabel}"/>
+                        <PasswordBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Name="RedisPasswordBox" Style="{StaticResource InputPassword}"/>
                     </Grid>
                 </Border>
 
@@ -285,6 +358,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="超时(秒)" Style="{StaticResource RowLabel}"/>
                             <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Connection.ConnectTimeout, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Input}"/>
@@ -292,6 +366,12 @@
                             <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Connection.Description, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource Input}" AcceptsReturn="True" Height="56"
                                      VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="连接串" Style="{StaticResource RowLabel}" VerticalAlignment="Top" Margin="0,4,10,8"/>
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Connection.ConnectionString, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource Input}" AcceptsReturn="True" Height="56"
+                                     VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                                     materialDesign:HintAssist.Hint="自定义连接字符串（填写后将忽略上面字段，直接使用此串）"
+                                     materialDesign:HintAssist.IsFloating="False"/>
                         </Grid>
                     </Border>
                 </Expander>
