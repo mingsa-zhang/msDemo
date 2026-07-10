@@ -42,6 +42,11 @@ public partial class AddEditConnViewModel : ObservableObject
         {
             WindowTitle = "编辑连接";
         }
+        else if (connection.DbType == 0)
+        {
+            // 新连接默认 MySQL（枚举从 1 起，0 为未设置，会误显"未实现"）
+            connection.DbType = DbTypeEnum.MySql;
+        }
 
         _ = LoadGroupsAsync();
 
@@ -55,6 +60,7 @@ public partial class AddEditConnViewModel : ObservableObject
         };
 
         UpdateDbTypeVisibility();
+        AutoFillDefaultPort();
     }
 
     private async Task LoadGroupsAsync()
