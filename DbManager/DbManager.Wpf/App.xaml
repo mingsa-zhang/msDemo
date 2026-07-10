@@ -20,6 +20,7 @@
             <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
             <converters:BoolToEditModeTextConverter x:Key="BoolToEditModeTextConverter"/>
             <converters:AutoCommitTextConverter x:Key="AutoCommitTextConverter"/>
+            <converters:DbTypeToIconConverter x:Key="DbTypeToIconConverter"/>
 
             <!-- Navicat风格扁平工具栏按钮 -->
             <Style x:Key="ToolBarButton" TargetType="Button">

@@ -19,6 +19,32 @@ public class NullCellDisplayConverter : IValueConverter
 }
 
 /// <summary>
+/// 数据库类型 → MaterialDesign 图标（用于连接编辑窗的可视化类型选择）。
+/// </summary>
+public class DbTypeToIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var kind = value switch
+        {
+            DbManager.Core.Enums.DbTypeEnum.MySql or DbManager.Core.Enums.DbTypeEnum.MariaDB => PackIconKind.Database,
+            DbManager.Core.Enums.DbTypeEnum.SqlServer => PackIconKind.DatabaseOutline,
+            DbManager.Core.Enums.DbTypeEnum.PostgreSQL => PackIconKind.DatabaseSearch,
+            DbManager.Core.Enums.DbTypeEnum.Oracle => PackIconKind.DatabaseEye,
+            DbManager.Core.Enums.DbTypeEnum.SQLite => PackIconKind.FileOutline,
+            DbManager.Core.Enums.DbTypeEnum.MongoDB => PackIconKind.Leaf,
+            DbManager.Core.Enums.DbTypeEnum.Redis => PackIconKind.LightningBolt,
+            DbManager.Core.Enums.DbTypeEnum.DB2 => PackIconKind.DatabaseClock,
+            _ => PackIconKind.Database
+        };
+        return kind;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
+/// <summary>
 /// 自动提交状态文本：true → "自动提交"，false → "手动事务"。
 /// </summary>
 public class AutoCommitTextConverter : IValueConverter
