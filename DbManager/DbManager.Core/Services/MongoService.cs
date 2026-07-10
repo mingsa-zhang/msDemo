@@ -57,11 +57,13 @@ public sealed class MongoService
         var db = CreateClient(connectionString).GetDatabase(database);
         var col = db.GetCollection<BsonDocument>(collection);
 
-        var filter = string.IsNullOrWhiteSpace(filterJson)
-            ? new BsonDocument()
-            : BsonDocument.Parse(filterJson);
+        var noFilter = string.IsNullOrWhiteSpace(filterJson);
+        var filter = noFilter ? new BsonDocument() : BsonDocument.Parse(filterJson);
 
-        var total = await col.CountDocumentsAsync(filter);
+        // 无过滤时用估算计数（走集合元数据，大集合更快）；有过滤才精确计数
+        var total = noFilter
+            ? await col.EstimatedDocumentCountAsync()
+            : await col.CountDocumentsAsync(filter);
         var docs = await col.Find(filter).Skip(skip).Limit(limit).ToListAsync();
         var json = docs.Select(d => d.ToJson(JsonSettings)).ToList();
         return (json, total);

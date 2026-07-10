@@ -66,13 +66,14 @@ public sealed class RedisService
         var db = mux.GetDatabase(database);
         var type = await db.KeyTypeAsync(key);
 
+        // 大集合仅取前 MaxItems 项，避免巨型键拉取导致卡死/内存膨胀
         var value = type switch
         {
             RedisType.String => (string?)await db.StringGetAsync(key) ?? string.Empty,
-            RedisType.Hash => FormatHash(await db.HashGetAllAsync(key)),
-            RedisType.List => FormatList(await db.ListRangeAsync(key)),
-            RedisType.Set => FormatList(await db.SetMembersAsync(key)),
-            RedisType.SortedSet => FormatSortedSet(await db.SortedSetRangeByRankWithScoresAsync(key)),
+            RedisType.Hash => FormatHash(db.HashScan(key, pageSize: 250).Take(MaxItems + 1).ToArray()),
+            RedisType.List => FormatList(await db.ListRangeAsync(key, 0, MaxItems)),
+            RedisType.Set => FormatList(db.SetScan(key, pageSize: 250).Take(MaxItems + 1).ToArray()),
+            RedisType.SortedSet => FormatSortedSet(await db.SortedSetRangeByRankWithScoresAsync(key, 0, MaxItems)),
             RedisType.None => "(键不存在)",
             _ => "(不支持展示的类型)"
         };
@@ -121,33 +122,53 @@ public sealed class RedisService
         return mux.IsConnected;
     }
 
+    /// <summary>
+    /// 单键值展示的最大条目数（超出仅显示前 N 项）。
+    /// </summary>
+    private const int MaxItems = 500;
+
     private static string FormatHash(HashEntry[] entries)
     {
         var sb = new StringBuilder();
-        foreach (var e in entries)
+        foreach (var e in entries.Take(MaxItems))
         {
             sb.AppendLine($"{e.Name}: {e.Value}");
         }
+        AppendOverflow(sb, entries.Length);
         return sb.ToString();
     }
 
     private static string FormatList(RedisValue[] values)
     {
         var sb = new StringBuilder();
-        for (int i = 0; i < values.Length; i++)
+        var shown = Math.Min(values.Length, MaxItems);
+        for (int i = 0; i < shown; i++)
         {
             sb.AppendLine($"[{i}] {values[i]}");
         }
+        AppendOverflow(sb, values.Length);
         return sb.ToString();
     }
 
     private static string FormatSortedSet(SortedSetEntry[] entries)
     {
         var sb = new StringBuilder();
-        foreach (var e in entries)
+        foreach (var e in entries.Take(MaxItems))
         {
             sb.AppendLine($"{e.Score}: {e.Element}");
         }
+        AppendOverflow(sb, entries.Length);
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// 取到超过上限时追加提示（拉取时多取 1 项用于探测是否溢出）。
+    /// </summary>
+    private static void AppendOverflow(StringBuilder sb, int fetchedCount)
+    {
+        if (fetchedCount > MaxItems)
+        {
+            sb.AppendLine($"… （仅显示前 {MaxItems} 项）");
+        }
     }
 }
