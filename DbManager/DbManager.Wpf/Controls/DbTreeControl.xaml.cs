@@ -105,19 +105,16 @@ public partial class DbTreeControl : UserControl
                 ViewModel?.RequestOpenMongoBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
                 break;
             case TreeNodeType.Database:
-                // 双击库：展开/折叠查看下级对象（表/Schema 等），与"连接"节点的双击行为一致；
+                // 展开/折叠看下级对象（表/Schema 等）：IsExpanded 已与 TreeViewItem 双向绑定，
+                // WPF 对 TreeViewItem 头部双击本就会自动切换展开状态，这里不需要（也不能）再手动切一次，
+                // 否则会出现"展开→立刻又被切回折叠"的抽搐（先原生切一次，再手动切一次变回原状）。
                 // 新建查询走右键菜单"新建查询"，不占用双击语义
-                node.IsExpanded = !node.IsExpanded;
                 break;
             case TreeNodeType.Connection:
-                // Redis 连接：双击打开键浏览器；其余展开
+                // Redis 连接：双击打开键浏览器；其余展开/折叠交给 TreeViewItem 原生双击行为，理由同上
                 if (node.DbType == DbManager.Core.Enums.DbTypeEnum.Redis)
                 {
                     ViewModel?.RequestOpenRedisBrowser(node.ConnectionId);
-                }
-                else
-                {
-                    node.IsExpanded = !node.IsExpanded;
                 }
                 break;
         }
