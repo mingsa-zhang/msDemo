@@ -124,7 +124,7 @@ public partial class RedisBrowserViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 编辑当前 String 键的值（仅 string 类型可编辑）。
+    /// 编辑当前键的值：String 直接编辑；Hash/List/Set/SortedSet 按结构化文本整篇编辑后解析回写（先删后写，保留原 TTL）。
     /// </summary>
     [RelayCommand]
     private async Task EditValue()
@@ -134,13 +134,20 @@ public partial class RedisBrowserViewModel : ObservableObject
             MessageTipHelper.Warning("请先选择一个键");
             return;
         }
-        if (!string.Equals(ValueType, "String", StringComparison.OrdinalIgnoreCase))
+
+        var typeLower = ValueType.ToLowerInvariant();
+        if (typeLower is not ("string" or "hash" or "list" or "set" or "sortedset"))
         {
-            MessageTipHelper.Warning("仅支持编辑 String 类型的值");
+            MessageTipHelper.Warning("暂不支持编辑该类型");
+            return;
+        }
+        if (RedisService.IsTruncated(ValueText))
+        {
+            MessageTipHelper.Warning("该键内容过大已被截断展示，为避免误删数据暂不支持整篇编辑");
             return;
         }
 
-        var edited = TextEditDialog.Show(Owner, $"编辑值 - {SelectedKey}", ValueText, jsonFormat: false);
+        var edited = TextEditDialog.Show(Owner, $"编辑值 - {SelectedKey} ({ValueType})", ValueText, jsonFormat: false);
         if (edited == null)
         {
             return;
@@ -148,9 +155,30 @@ public partial class RedisBrowserViewModel : ObservableObject
 
         try
         {
-            await _redis.SetStringAsync(GetConnectionString(), Database, SelectedKey, edited);
+            switch (typeLower)
+            {
+                case "string":
+                    await _redis.SetStringAsync(GetConnectionString(), Database, SelectedKey, edited);
+                    break;
+                case "hash":
+                    await _redis.ReplaceHashAsync(GetConnectionString(), Database, SelectedKey, RedisService.ParseHashLines(edited));
+                    break;
+                case "list":
+                    await _redis.ReplaceListAsync(GetConnectionString(), Database, SelectedKey, RedisService.ParseIndexedLines(edited));
+                    break;
+                case "set":
+                    await _redis.ReplaceSetAsync(GetConnectionString(), Database, SelectedKey, RedisService.ParseIndexedLines(edited));
+                    break;
+                case "sortedset":
+                    await _redis.ReplaceSortedSetAsync(GetConnectionString(), Database, SelectedKey, RedisService.ParseSortedSetLines(edited));
+                    break;
+            }
             MessageTipHelper.Success("值已更新");
             await LoadValueAsync(SelectedKey);
+        }
+        catch (FormatException ex)
+        {
+            MessageTipHelper.Error($"格式错误，未保存: {ex.Message}");
         }
         catch (Exception ex)
         {

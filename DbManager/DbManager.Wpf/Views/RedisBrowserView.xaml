@@ -56,7 +56,7 @@
                     <DockPanel>
                         <!-- 键操作 -->
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                            <Button ToolTip="编辑值(仅 String)" Command="{Binding EditValueCommand}" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
+                            <Button ToolTip="编辑值" Command="{Binding EditValueCommand}" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">
                                 <materialDesign:PackIcon Kind="PencilOutline" Width="14" Height="14"/>
                             </Button>
                             <Button ToolTip="设置 TTL" Command="{Binding SetTtlCommand}" Padding="4,2" Margin="1,0" Style="{StaticResource ToolBarButton}">

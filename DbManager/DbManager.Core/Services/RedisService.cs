@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using StackExchange.Redis;
 
@@ -141,6 +142,86 @@ public sealed class RedisService
     }
 
     /// <summary>
+    /// 整体替换 Hash 键的全部字段（先删后写，写入前后保留原 TTL）。
+    /// </summary>
+    public async Task ReplaceHashAsync(string connectionString, int database, string key, IReadOnlyDictionary<string, string> fields)
+    {
+        using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        var db = mux.GetDatabase(database);
+        var ttl = await db.KeyTimeToLiveAsync(key);
+        await db.KeyDeleteAsync(key);
+        if (fields.Count > 0)
+        {
+            var entries = fields.Select(kv => new HashEntry(kv.Key, kv.Value)).ToArray();
+            await db.HashSetAsync(key, entries);
+            if (ttl != null)
+            {
+                await db.KeyExpireAsync(key, ttl);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 整体替换 List 键的全部元素（先删后写，写入前后保留原 TTL）。
+    /// </summary>
+    public async Task ReplaceListAsync(string connectionString, int database, string key, IReadOnlyList<string> items)
+    {
+        using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        var db = mux.GetDatabase(database);
+        var ttl = await db.KeyTimeToLiveAsync(key);
+        await db.KeyDeleteAsync(key);
+        if (items.Count > 0)
+        {
+            var values = items.Select(v => (RedisValue)v).ToArray();
+            await db.ListRightPushAsync(key, values);
+            if (ttl != null)
+            {
+                await db.KeyExpireAsync(key, ttl);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 整体替换 Set 键的全部成员（先删后写，写入前后保留原 TTL）。
+    /// </summary>
+    public async Task ReplaceSetAsync(string connectionString, int database, string key, IReadOnlyList<string> members)
+    {
+        using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        var db = mux.GetDatabase(database);
+        var ttl = await db.KeyTimeToLiveAsync(key);
+        await db.KeyDeleteAsync(key);
+        if (members.Count > 0)
+        {
+            var values = members.Select(v => (RedisValue)v).ToArray();
+            await db.SetAddAsync(key, values);
+            if (ttl != null)
+            {
+                await db.KeyExpireAsync(key, ttl);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 整体替换 SortedSet 键的全部成员及分数（先删后写，写入前后保留原 TTL）。
+    /// </summary>
+    public async Task ReplaceSortedSetAsync(string connectionString, int database, string key, IReadOnlyList<(double Score, string Member)> entries)
+    {
+        using var mux = await ConnectionMultiplexer.ConnectAsync(connectionString);
+        var db = mux.GetDatabase(database);
+        var ttl = await db.KeyTimeToLiveAsync(key);
+        await db.KeyDeleteAsync(key);
+        if (entries.Count > 0)
+        {
+            var values = entries.Select(e => new SortedSetEntry(e.Member, e.Score)).ToArray();
+            await db.SortedSetAddAsync(key, values);
+            if (ttl != null)
+            {
+                await db.KeyExpireAsync(key, ttl);
+            }
+        }
+    }
+
+    /// <summary>
     /// 连接测试。
     /// </summary>
     public async Task<bool> TestAsync(string connectionString)
@@ -153,6 +234,82 @@ public sealed class RedisService
     /// 单键值展示的最大条目数（超出仅显示前 N 项）。
     /// </summary>
     private const int MaxItems = 500;
+
+    /// <summary>
+    /// 溢出提示前缀，供上层判断"当前展示文本是否已被截断"（截断的文本不应回写，避免结构化保存时丢数据）。
+    /// </summary>
+    public const string OverflowMarkerPrefix = "… （仅显示前 ";
+
+    /// <summary>
+    /// 判断格式化后的文本是否因超过 <see cref="MaxItems"/> 而被截断。
+    /// </summary>
+    public static bool IsTruncated(string formattedValue) => formattedValue.Contains(OverflowMarkerPrefix);
+
+    /// <summary>
+    /// 解析「名称: 值」形式的 Hash 编辑文本（对应 <see cref="FormatHash"/> 的输出格式）。
+    /// </summary>
+    public static Dictionary<string, string> ParseHashLines(string text)
+    {
+        var dict = new Dictionary<string, string>();
+        foreach (var line in SplitNonEmptyLines(text))
+        {
+            var idx = line.IndexOf(": ", StringComparison.Ordinal);
+            if (idx < 0)
+            {
+                throw new FormatException($"字段行格式应为「名称: 值」，无法解析: {line}");
+            }
+            dict[line[..idx]] = line[(idx + 2)..];
+        }
+        return dict;
+    }
+
+    /// <summary>
+    /// 解析「[序号] 值」形式的 List/Set 编辑文本（对应 <see cref="FormatList"/> 的输出格式，序号仅供展示，回写按行序）。
+    /// </summary>
+    public static List<string> ParseIndexedLines(string text)
+    {
+        var list = new List<string>();
+        foreach (var line in SplitNonEmptyLines(text))
+        {
+            var idx = line.IndexOf("] ", StringComparison.Ordinal);
+            if (!line.StartsWith('[') || idx < 0)
+            {
+                throw new FormatException($"元素行格式应为「[序号] 值」，无法解析: {line}");
+            }
+            list.Add(line[(idx + 2)..]);
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// 解析「分数: 成员」形式的 SortedSet 编辑文本（对应 <see cref="FormatSortedSet"/> 的输出格式）。
+    /// </summary>
+    public static List<(double Score, string Member)> ParseSortedSetLines(string text)
+    {
+        var list = new List<(double, string)>();
+        foreach (var line in SplitNonEmptyLines(text))
+        {
+            var idx = line.IndexOf(": ", StringComparison.Ordinal);
+            if (idx < 0 || !double.TryParse(line[..idx], NumberStyles.Float, CultureInfo.InvariantCulture, out var score))
+            {
+                throw new FormatException($"成员行格式应为「分数: 成员」，无法解析: {line}");
+            }
+            list.Add((score, line[(idx + 2)..]));
+        }
+        return list;
+    }
+
+    private static IEnumerable<string> SplitNonEmptyLines(string text)
+    {
+        foreach (var raw in text.Replace("\r\n", "\n").Split('\n'))
+        {
+            var line = raw.TrimEnd();
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                yield return line;
+            }
+        }
+    }
 
     private static string FormatHash(HashEntry[] entries)
     {
@@ -182,7 +339,7 @@ public sealed class RedisService
         var sb = new StringBuilder();
         foreach (var e in entries.Take(MaxItems))
         {
-            sb.AppendLine($"{e.Score}: {e.Element}");
+            sb.AppendLine($"{e.Score.ToString(CultureInfo.InvariantCulture)}: {e.Element}");
         }
         AppendOverflow(sb, entries.Length);
         return sb.ToString();
@@ -195,7 +352,7 @@ public sealed class RedisService
     {
         if (fetchedCount > MaxItems)
         {
-            sb.AppendLine($"… （仅显示前 {MaxItems} 项）");
+            sb.AppendLine($"{OverflowMarkerPrefix}{MaxItems} 项）");
         }
     }
 }
