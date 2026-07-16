@@ -207,6 +207,8 @@ public partial class AddEditConnViewModel : ObservableObject
             if (Connection.Id > 0)
             {
                 await _connectionService.UpdateConnectionAsync(Connection);
+                // 连接参数（尤其 SSH 主机/端口/账号/密钥）可能已变，旧隧道按签名缓存不会自动失效，编辑后主动关闭以便下次按新参数重建
+                SshTunnelManager.CloseForConnection(Connection.Id);
             }
             else
             {

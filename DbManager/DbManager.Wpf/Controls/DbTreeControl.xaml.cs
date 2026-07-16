@@ -179,6 +179,7 @@ public partial class DbTreeControl : UserControl
             if (result == MessageBoxResult.Yes)
             {
                 _ = App.ConnectionService.DeleteConnectionAsync(node.ConnectionId);
+                SshTunnelManager.CloseForConnection(node.ConnectionId);
                 _ = ViewModel?.RefreshAsync();
             }
         }

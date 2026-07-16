@@ -165,6 +165,29 @@ public sealed class SqlServerDialect : DialectBase
     public override string BuildAddColumn(string qualifiedTable, string quotedColumn, string columnDefinition)
         => $"ALTER TABLE {qualifiedTable} ADD {quotedColumn} {columnDefinition}";
 
+    // SqlServer: 默认值是独立的（系统自动命名的）约束对象，列上若有默认值约束，DROP COLUMN 前必须先按名 DROP CONSTRAINT，
+    // 否则报"依赖对象"错误；约束名不可预测，只能运行时查 sys.default_constraints 现找现删。
+    public override string BuildDropColumn(string qualifiedTable, string quotedColumn)
+    {
+        var rawColumn = UnquoteBracket(quotedColumn).Replace("'", "''");
+        return
+            $"DECLARE @df sysname;\n" +
+            $"SELECT @df = dc.name FROM sys.default_constraints dc " +
+            $"JOIN sys.columns c ON c.object_id = dc.parent_object_id AND c.column_id = dc.parent_column_id " +
+            $"WHERE dc.parent_object_id = OBJECT_ID(N'{qualifiedTable}') AND c.name = N'{rawColumn}';\n" +
+            $"IF @df IS NOT NULL EXEC('ALTER TABLE {qualifiedTable} DROP CONSTRAINT [' + @df + ']');\n" +
+            $"ALTER TABLE {qualifiedTable} DROP COLUMN {quotedColumn}";
+    }
+
+    /// <summary>
+    /// 去除方括号引用并还原转义（`]]` → `]`），用于取回原始标识符供目录视图按名比对。
+    /// </summary>
+    private static string UnquoteBracket(string quoted)
+    {
+        var inner = quoted.Length >= 2 && quoted[0] == '[' && quoted[^1] == ']' ? quoted[1..^1] : quoted;
+        return inner.Replace("]]", "]");
+    }
+
     // SqlServer: 类型+可空一条 ALTER COLUMN；默认值是独立约束，单独 ADD DEFAULT
     public override IReadOnlyList<string> BuildAlterColumn(string qualifiedTable, ColumnAlterSpec spec)
     {

@@ -100,4 +100,30 @@ public class DialectCreateTableTests
 
         Assert.Contains("DEFAULT 'active'", sql);
     }
+
+    [Fact]
+    public void SqlServer_DropColumn_FirstDropsDefaultConstraintByName()
+    {
+        var dialect = new SqlServerDialect();
+        var sql = dialect.BuildDropColumn("[db].[dbo].[t]", "[status]");
+
+        Assert.Contains("sys.default_constraints", sql);
+        Assert.Contains("OBJECT_ID(N'[db].[dbo].[t]')", sql);
+        Assert.Contains("c.name = N'status'", sql);
+        Assert.Contains("DROP CONSTRAINT", sql);
+        Assert.Contains("ALTER TABLE [db].[dbo].[t] DROP COLUMN [status]", sql);
+        // 删约束语句必须先于删列语句
+        Assert.True(sql.IndexOf("DROP CONSTRAINT", StringComparison.Ordinal)
+            < sql.IndexOf("DROP COLUMN", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void SqlServer_DropColumn_UnescapesBracketedColumnName()
+    {
+        var dialect = new SqlServerDialect();
+        // 列名本身含 ]，引用层会转义为 ]]
+        var sql = dialect.BuildDropColumn("[db].[dbo].[t]", "[a]]b]");
+
+        Assert.Contains("c.name = N'a]b'", sql);
+    }
 }
