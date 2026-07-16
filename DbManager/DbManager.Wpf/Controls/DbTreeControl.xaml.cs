@@ -105,15 +105,9 @@ public partial class DbTreeControl : UserControl
                 ViewModel?.RequestOpenMongoBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
                 break;
             case TreeNodeType.Database:
-                // MongoDB 库无 SQL 查询语义，双击展开即可
-                if (node.DbType == DbManager.Core.Enums.DbTypeEnum.MongoDB)
-                {
-                    node.IsExpanded = !node.IsExpanded;
-                }
-                else
-                {
-                    ViewModel?.RequestOpenSqlQuery(node.ConnectionId, node.DatabaseName ?? "");
-                }
+                // 双击库：展开/折叠查看下级对象（表/Schema 等），与"连接"节点的双击行为一致；
+                // 新建查询走右键菜单"新建查询"，不占用双击语义
+                node.IsExpanded = !node.IsExpanded;
                 break;
             case TreeNodeType.Connection:
                 // Redis 连接：双击打开键浏览器；其余展开
