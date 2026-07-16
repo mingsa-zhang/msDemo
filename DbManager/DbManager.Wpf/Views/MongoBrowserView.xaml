@@ -14,6 +14,7 @@
         <Border Grid.Row="0" Background="#FAFAFA" BorderBrush="#DCDCDC" BorderThickness="0,0,0,1" Padding="6,4">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
@@ -21,31 +22,34 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0" Text="{Binding FilterJson, UpdateSourceTrigger=PropertyChanged}"
+                <CheckBox Grid.Column="0" Content="聚合管道" IsChecked="{Binding IsAggregateMode}"
+                          FontSize="12" VerticalAlignment="Center" Margin="2,0,8,0"
+                          ToolTip="勾选后输入框内容按聚合管道(阶段数组)执行,否则按普通过滤条件执行"/>
+                <TextBox Grid.Column="1" Text="{Binding FilterJson, UpdateSourceTrigger=PropertyChanged}"
                          FontSize="12" FontFamily="Consolas" Padding="4,3" Margin="0,0,4,0"
-                         materialDesign:HintAssist.Hint="过滤 JSON (如 {&quot;age&quot;:{&quot;$gt&quot;:18}})"
+                         materialDesign:HintAssist.Hint="{Binding FilterHint}"
                          materialDesign:HintAssist.IsFloating="False">
                     <TextBox.InputBindings>
                         <KeyBinding Key="Enter" Command="{Binding ApplyFilterCommand}"/>
                     </TextBox.InputBindings>
                 </TextBox>
-                <Button Grid.Column="1" ToolTip="应用过滤" Command="{Binding ApplyFilterCommand}"
+                <Button Grid.Column="2" ToolTip="应用过滤/执行聚合" Command="{Binding ApplyFilterCommand}"
                         Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="Filter" Width="14" Height="14"/>
                 </Button>
-                <Button Grid.Column="2" ToolTip="清除过滤" Command="{Binding ClearFilterCommand}"
+                <Button Grid.Column="3" ToolTip="清除过滤" Command="{Binding ClearFilterCommand}"
                         Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="FilterOff" Width="14" Height="14"/>
                 </Button>
-                <Button Grid.Column="3" ToolTip="刷新" Command="{Binding RefreshCommand}"
+                <Button Grid.Column="4" ToolTip="刷新" Command="{Binding RefreshCommand}"
                         Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                 </Button>
-                <Button Grid.Column="4" ToolTip="导出当前页为 JSON" Command="{Binding ExportJsonCommand}"
+                <Button Grid.Column="5" ToolTip="导出当前页为 JSON" Command="{Binding ExportJsonCommand}"
                         Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="CodeJson" Width="16" Height="16" Foreground="#607D8B"/>
                 </Button>
-                <Button Grid.Column="5" ToolTip="新增文档" Command="{Binding InsertDocumentCommand}"
+                <Button Grid.Column="6" ToolTip="新增文档" Command="{Binding InsertDocumentCommand}"
                         Padding="6,3" Margin="1,0" Style="{StaticResource ToolBarButton}">
                     <materialDesign:PackIcon Kind="PlusBoxOutline" Width="16" Height="16" Foreground="#47A248"/>
                 </Button>

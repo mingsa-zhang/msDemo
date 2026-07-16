@@ -70,6 +70,40 @@ public sealed class MongoService
     }
 
     /// <summary>
+    /// 执行聚合管道（pipelineJson 为阶段数组，如 <c>[{"$match":{...}},{"$group":{...}}]</c>）。
+    /// 分页通过在管道末尾追加 $skip/$limit 阶段实现；总数通过追加 $count 阶段单独统计一次。
+    /// </summary>
+    public async Task<(List<string> Docs, long Total)> AggregateAsync(
+        string connectionString, string database, string collection, string? pipelineJson, int skip, int limit)
+    {
+        var col = GetCollection(connectionString, database, collection);
+        var stages = ParsePipelineStages(pipelineJson);
+
+        var countStages = new List<BsonDocument>(stages) { new BsonDocument("$count", "total") };
+        var countDoc = await col.Aggregate(PipelineDefinition<BsonDocument, BsonDocument>.Create(countStages)).FirstOrDefaultAsync();
+        var total = countDoc != null && countDoc.TryGetValue("total", out var totalVal) ? totalVal.ToInt64() : 0L;
+
+        var pageStages = new List<BsonDocument>(stages) { new BsonDocument("$skip", skip), new BsonDocument("$limit", limit) };
+        var docs = await col.Aggregate(PipelineDefinition<BsonDocument, BsonDocument>.Create(pageStages)).ToListAsync();
+        var json = docs.Select(d => d.ToJson(JsonSettings)).ToList();
+        return (json, total);
+    }
+
+    /// <summary>
+    /// 解析聚合管道 JSON（阶段数组）为 BsonDocument 列表；空/空白输入视为空管道（即原样返回所有文档）。
+    /// </summary>
+    public static List<BsonDocument> ParsePipelineStages(string? pipelineJson)
+    {
+        if (string.IsNullOrWhiteSpace(pipelineJson))
+        {
+            return new List<BsonDocument>();
+        }
+
+        var array = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonArray>(pipelineJson);
+        return array.Select(v => v.AsBsonDocument).ToList();
+    }
+
+    /// <summary>
     /// 按文档原始 JSON 中的 _id 删除该文档。
     /// </summary>
     public async Task DeleteDocumentAsync(string connectionString, string database, string collection, string documentJson)

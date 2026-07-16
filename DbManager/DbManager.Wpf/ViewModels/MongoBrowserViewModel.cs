@@ -24,6 +24,7 @@ public partial class MongoBrowserViewModel : ObservableObject
     [ObservableProperty] private string _iconKind = "FileDocumentOutline";
     [ObservableProperty] private ObservableCollection<string> _documents = new();
     [ObservableProperty] private string _filterJson = string.Empty;
+    [ObservableProperty] private bool _isAggregateMode;
     [ObservableProperty] private int _pageIndex = 1;
     [ObservableProperty] private int _pageSize = 20;
     [ObservableProperty] private long _totalCount;
@@ -32,6 +33,11 @@ public partial class MongoBrowserViewModel : ObservableObject
 
     public long TotalPages => TotalCount > 0 ? (long)Math.Ceiling((double)TotalCount / PageSize) : 0;
     public string PageInfo => TotalPages > 0 ? $"第 {PageIndex}/{TotalPages} 页（共 {TotalCount} 篇）" : "无文档";
+    public string FilterHint => IsAggregateMode
+        ? "聚合管道 JSON 数组 (如 [{\"$match\":{...}},{\"$group\":{...}}])"
+        : "过滤 JSON (如 {\"age\":{\"$gt\":18}})";
+
+    partial void OnIsAggregateModeChanged(bool value) => OnPropertyChanged(nameof(FilterHint));
 
     public MongoBrowserViewModel(DbConnectionModel connection, string database, string collection)
     {
@@ -52,7 +58,9 @@ public partial class MongoBrowserViewModel : ObservableObject
         try
         {
             var skip = (PageIndex - 1) * PageSize;
-            var (docs, total) = await _mongo.QueryAsync(GetConnectionString(), _database, _collection, FilterJson, skip, PageSize);
+            var (docs, total) = IsAggregateMode
+                ? await _mongo.AggregateAsync(GetConnectionString(), _database, _collection, FilterJson, skip, PageSize)
+                : await _mongo.QueryAsync(GetConnectionString(), _database, _collection, FilterJson, skip, PageSize);
             Documents = new ObservableCollection<string>(docs);
             TotalCount = total;
             StatusMessage = $"共 {total} 篇文档";
