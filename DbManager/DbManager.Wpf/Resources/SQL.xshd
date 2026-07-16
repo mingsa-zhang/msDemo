@@ -13,7 +13,7 @@
             <Begin>--</Begin>
         </Span>
         <Span color="Comment">
-            <Begin>#</Begin>
+            <Begin>\#</Begin>
         </Span>
         <!-- 多行注释 -->
         <Span color="Comment" ruleSet="CommentRuleSet">
