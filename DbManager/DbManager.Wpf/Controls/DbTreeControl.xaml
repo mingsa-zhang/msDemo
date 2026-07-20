@@ -286,7 +286,7 @@
                     <Setter Property="Background" Value="Transparent"/>
                     <Setter Property="MinHeight" Value="24"/>
                     <EventSetter Event="Expanded" Handler="TreeViewItem_Expanded"/>
-                    <EventSetter Event="MouseDoubleClick" Handler="TreeViewItem_DoubleClick"/>
+                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="TreeViewItem_PreviewMouseLeftButtonDown"/>
                     <EventSetter Event="MouseRightButtonDown" Handler="TreeViewItem_RightClick"/>
                     <Style.Triggers>
                         <Trigger Property="IsSelected" Value="True">

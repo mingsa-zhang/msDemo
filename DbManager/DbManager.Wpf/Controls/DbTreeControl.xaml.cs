@@ -83,13 +83,34 @@ public partial class DbTreeControl : UserControl
         return DbTreeView;
     }
 
-    private void TreeViewItem_DoubleClick(object sender, MouseButtonEventArgs e)
+    /// <summary>
+    /// 双击处理改走 Preview（隧道）阶段的 MouseLeftButtonDown，而不是 MouseDoubleClick：
+    /// TreeViewItem 自带"双击自动切换 IsExpanded"的原生行为（其 OnMouseLeftButtonDown 里按 ClickCount 判断），
+    /// 且发生在 Bubble 阶段——等 MouseDoubleClick 触发时原生切换已经跑完，来不及拦截，会和我们自己的切换叠加
+    /// 变成"展开又立刻缩回"；改到更早的 Preview 阶段把事件标记为 Handled，可以在原生逻辑跑之前就拦下它
+    /// （Preview/Bubble 复用同一个事件参数对象，Handled 会一路带过去）。
+    /// </summary>
+    private void TreeViewItem_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (sender is TreeViewItem item && item.DataContext is DbTreeNodeViewModel node)
+        if (e.ClickCount != 2) return; // 单击不拦截，交给原生的选中/焦点/展开箭头行为
+        if (sender is not TreeViewItem item) return;
+        // Preview 事件从根向叶隧道，子节点的 TreeViewItem 用的是同一套样式/Handler，
+        // 隧道经过父节点时也会先调用一次本方法；必须确认这次双击真的落在“当前处理的这个”
+        // TreeViewItem 自己的头部上（而不是更深层子节点的头部），否则会把子节点的双击误当成父节点的。
+        if (FindAncestorTreeViewItem(e.OriginalSource as DependencyObject) != item) return;
+        if (item.DataContext is not DbTreeNodeViewModel node) return;
+
+        HandleDoubleClick(node);
+        e.Handled = true;
+    }
+
+    private static TreeViewItem? FindAncestorTreeViewItem(DependencyObject? source)
+    {
+        while (source != null && source is not TreeViewItem)
         {
-            HandleDoubleClick(node);
-            e.Handled = true;
+            source = System.Windows.Media.VisualTreeHelper.GetParent(source);
         }
+        return source as TreeViewItem;
     }
 
     private void HandleDoubleClick(DbTreeNodeViewModel node)
@@ -105,16 +126,19 @@ public partial class DbTreeControl : UserControl
                 ViewModel?.RequestOpenMongoBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
                 break;
             case TreeNodeType.Database:
-                // 展开/折叠看下级对象（表/Schema 等）：IsExpanded 已与 TreeViewItem 双向绑定，
-                // WPF 对 TreeViewItem 头部双击本就会自动切换展开状态，这里不需要（也不能）再手动切一次，
-                // 否则会出现"展开→立刻又被切回折叠"的抽搐（先原生切一次，再手动切一次变回原状）。
-                // 新建查询走右键菜单"新建查询"，不占用双击语义
+                // 展开/折叠看下级对象（表/Schema 等）。这里已经在 Preview 阶段拦下了原生双击展开，
+                // 所以要靠自己手动切换；不会再和原生逻辑重复触发。
+                node.IsExpanded = !node.IsExpanded;
                 break;
             case TreeNodeType.Connection:
-                // Redis 连接：双击打开键浏览器；其余展开/折叠交给 TreeViewItem 原生双击行为，理由同上
+                // Redis 连接：双击打开键浏览器；其余手动切换展开/折叠（理由同上）
                 if (node.DbType == DbManager.Core.Enums.DbTypeEnum.Redis)
                 {
                     ViewModel?.RequestOpenRedisBrowser(node.ConnectionId);
+                }
+                else
+                {
+                    node.IsExpanded = !node.IsExpanded;
                 }
                 break;
         }
