@@ -213,8 +213,14 @@ public partial class DbTreeNodeViewModel : ObservableObject
         new() { DisplayName = "函数", NodeType = TreeNodeType.FunctionGroup, ConnectionId = ConnectionId, DatabaseName = database, SchemaName = schema, IconKind = "FunctionVariant", IconColor = "#9C27B0" }
     };
 
+    private bool _isLoadingChildren;
+
     public async Task LoadChildrenAsync()
     {
+        // 展开时 WPF 的 Expanded 路由事件与 IsExpanded 双向绑定回传的 OnIsExpandedChanged 会同时触发本方法，
+        // 若不加区块会并发发起两次相同的元数据查询（IsLoaded 要等整个 await 完成才置 true，来不及拦第二次）
+        if (_isLoadingChildren) return;
+        _isLoadingChildren = true;
         try
         {
             List<DbTreeNodeModel> children;
@@ -322,6 +328,10 @@ public partial class DbTreeNodeViewModel : ObservableObject
             Children = new ObservableCollection<DbTreeNodeViewModel>();
             DisplayName = $"{DisplayName} (加载失败)";
             System.Diagnostics.Debug.WriteLine($"树节点加载失败: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingChildren = false;
         }
     }
 }
