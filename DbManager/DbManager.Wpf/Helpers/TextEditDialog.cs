@@ -35,6 +35,12 @@ public static class TextEditDialog
             FontSize = 13,
             Padding = new Thickness(6)
         };
+        // 鼠标滚轮无论落在文本区还是滚动条上都能滚动（而不是只能拖滚动条）
+        box.PreviewMouseWheel += (s, e) =>
+        {
+            box.ScrollToVerticalOffset(box.VerticalOffset - e.Delta);
+            e.Handled = true;
+        };
 
         var ok = new Button { Content = "确定", Width = 76, Height = 28, Margin = new Thickness(0, 0, 8, 0), IsDefault = true };
         var cancel = new Button { Content = "取消", Width = 76, Height = 28, IsCancel = true };

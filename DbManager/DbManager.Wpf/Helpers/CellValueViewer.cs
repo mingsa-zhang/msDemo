@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Newtonsoft.Json;
 
@@ -27,6 +28,12 @@ public static class CellValueViewer
             FontSize = 13,
             Margin = new Thickness(8)
         };
+        // 鼠标滚轮无论落在文本区还是滚动条上都能滚动（而不是只能拖滚动条）
+        textBox.PreviewMouseWheel += (s, e) =>
+        {
+            textBox.ScrollToVerticalOffset(textBox.VerticalOffset - e.Delta);
+            e.Handled = true;
+        };
         var win = new Window
         {
             Title = $"单元格内容 - {columnName}",
@@ -35,6 +42,12 @@ public static class CellValueViewer
             Content = textBox,
             Owner = owner,
             WindowStartupLocation = owner != null ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen
+        };
+        // 打开即聚焦并全选，可直接 Ctrl+C 复制或按方向键/滚轮浏览，不用先手动点一下
+        win.Loaded += (_, _) =>
+        {
+            textBox.Focus();
+            textBox.SelectAll();
         };
         win.ShowDialog();
     }

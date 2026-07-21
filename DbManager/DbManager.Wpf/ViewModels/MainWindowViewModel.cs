@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DbManager.Core.Interfaces;
@@ -88,6 +89,16 @@ public partial class MainWindowViewModel : ObservableObject
 
     public async Task OpenDataBrowserAsync(int connectionId, string databaseName, string tableName, string? schema = null)
     {
+        var existingKey = $"{connectionId}|{databaseName}|{schema}|{tableName}";
+        var existing = Tabs.FirstOrDefault(t => t.ContentType == TabContentType.DataBrowser
+            && t.Content is DataBrowserViewModel vm && vm.TableKey == existingKey);
+        if (existing != null)
+        {
+            // 已经打开过这张表，定位到已有标签页，不再重复开新标签
+            SelectedTab = existing;
+            return;
+        }
+
         var connection = await _connectionService.GetConnectionByIdAsync(connectionId);
         if (connection == null) return;
 

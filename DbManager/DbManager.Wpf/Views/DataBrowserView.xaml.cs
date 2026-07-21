@@ -90,6 +90,9 @@ public partial class DataBrowserView : UserControl
             new System.Windows.Data.Binding(path) { Converter = new Converters.NullCellDisplayConverter() });
         factory.SetValue(TextBlock.MarginProperty, new Thickness(4, 0, 4, 0));
         factory.SetValue(TextBlock.VerticalAlignmentProperty, VerticalAlignment.Center);
+        // 内容超出列宽时省略号截断，避免长文本视觉上"糊"到下一列里；双击单元格可看完整内容
+        factory.SetValue(TextBlock.TextTrimmingProperty, TextTrimming.CharacterEllipsis);
+        factory.SetValue(TextBlock.TextWrappingProperty, TextWrapping.NoWrap);
 
         // NULL 时置灰斜体
         var style = new Style(typeof(TextBlock));
