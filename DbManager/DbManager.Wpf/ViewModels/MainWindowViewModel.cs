@@ -37,6 +37,7 @@ public partial class MainWindowViewModel : ObservableObject
         _treeViewModel.OpenRedisBrowserRequested += id => _ = OpenRedisBrowserAsync(id);
 
         _ = LoadConnectionCountAsync();
+        _ = _treeViewModel.RefreshAsync();
     }
 
     private async Task LoadConnectionCountAsync()
