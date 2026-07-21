@@ -6,13 +6,6 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d">
 
-    <UserControl.Resources>
-        <Style x:Key="MenuItemStyle" TargetType="MenuItem">
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="FontSize" Value="12"/>
-        </Style>
-    </UserControl.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -55,29 +48,29 @@
             <TreeView.Resources>
                 <!-- 连接节点右键菜单 -->
                 <ContextMenu x:Key="ConnectionMenu">
-                    <MenuItem Header="新建查询" Click="Menu_NewQuery" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建查询" Click="Menu_NewQuery">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="测试连接" Click="Menu_TestConnection" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="测试连接" Click="Menu_TestConnection">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="LanConnect" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="编辑连接" Click="Menu_EditConnection" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="编辑连接" Click="Menu_EditConnection">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="PencilOutline" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="删除连接" Click="Menu_DeleteConnection" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="删除连接" Click="Menu_DeleteConnection">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DeleteOutline" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="刷新" Click="Menu_Refresh">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -86,18 +79,18 @@
 
                 <!-- 数据库节点右键菜单 -->
                 <ContextMenu x:Key="DatabaseMenu">
-                    <MenuItem Header="新建查询" Click="Menu_NewQuery" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建查询" Click="Menu_NewQuery">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="新建表" Click="Menu_NewTable" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建表" Click="Menu_NewTable">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="TablePlus" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="刷新" Click="Menu_Refresh">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -106,13 +99,13 @@
 
                 <!-- "表"分组节点右键菜单 -->
                 <ContextMenu x:Key="TableGroupMenu">
-                    <MenuItem Header="新建表" Click="Menu_NewTable" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建表" Click="Menu_NewTable">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="TablePlus" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="刷新" Click="Menu_Refresh">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -121,39 +114,39 @@
 
                 <!-- 表节点右键菜单 -->
                 <ContextMenu x:Key="TableMenu">
-                    <MenuItem Header="查看数据" Click="Menu_ViewData" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="查看数据" Click="Menu_ViewData">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="TableSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="设计表" Click="Menu_DesignTable" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="设计表" Click="Menu_DesignTable">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="TableLarge" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="新建查询" Click="Menu_NewQuery" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建查询" Click="Menu_NewQuery">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="截断表" Click="Menu_TruncateTable" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="截断表" Click="Menu_TruncateTable">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DeleteSweep" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="复制表名" Click="Menu_CopyName" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="复制表名" Click="Menu_CopyName">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="查看建表SQL" Click="Menu_ViewDdl" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="查看建表SQL" Click="Menu_ViewDdl">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="CodeTags" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="刷新" Click="Menu_Refresh">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -162,7 +155,7 @@
 
                 <!-- 列节点右键菜单 -->
                 <ContextMenu x:Key="ColumnMenu">
-                    <MenuItem Header="复制列名" Click="Menu_CopyName" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="复制列名" Click="Menu_CopyName">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -171,18 +164,18 @@
 
                 <!-- 视图节点右键菜单 -->
                 <ContextMenu x:Key="ViewMenu">
-                    <MenuItem Header="查看数据" Click="Menu_ViewData" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="查看数据" Click="Menu_ViewData">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="TableSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="新建查询" Click="Menu_NewQuery" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建查询" Click="Menu_NewQuery">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="复制视图名" Click="Menu_CopyName" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="复制视图名" Click="Menu_CopyName">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -191,13 +184,13 @@
 
                 <!-- 存储过程节点右键菜单 -->
                 <ContextMenu x:Key="ProcedureMenu">
-                    <MenuItem Header="新建查询" Click="Menu_NewQuery" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建查询" Click="Menu_NewQuery">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="复制过程名" Click="Menu_CopyName" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="复制过程名" Click="Menu_CopyName">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -206,13 +199,13 @@
 
                 <!-- 函数节点右键菜单 -->
                 <ContextMenu x:Key="FunctionMenu">
-                    <MenuItem Header="新建查询" Click="Menu_NewQuery" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建查询" Click="Menu_NewQuery">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabaseSearch" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="复制函数名" Click="Menu_CopyName" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="复制函数名" Click="Menu_CopyName">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -221,7 +214,7 @@
 
                 <!-- 对象组（表/视图/字段等文件夹）右键菜单 -->
                 <ContextMenu x:Key="GroupMenu">
-                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="刷新" Click="Menu_Refresh">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                         </MenuItem.Icon>
@@ -230,28 +223,28 @@
 
                 <!-- 连接分组节点右键菜单 -->
                 <ContextMenu x:Key="ConnGroupMenu">
-                    <MenuItem Header="新建分组" Click="Menu_NewGroup" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建分组" Click="Menu_NewGroup">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="FolderPlusOutline" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="重命名分组" Click="Menu_RenameGroup" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="重命名分组" Click="Menu_RenameGroup">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="RenameBox" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="删除分组" Click="Menu_DeleteGroup" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="删除分组" Click="Menu_DeleteGroup">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="FolderRemoveOutline" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Header="新建连接" Click="Menu_NewConnectionFromGroup" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="新建连接" Click="Menu_NewConnectionFromGroup">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="DatabasePlusOutline" Width="16" Height="16"/>
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="刷新" Click="Menu_Refresh" Style="{StaticResource MenuItemStyle}">
+                    <MenuItem Header="刷新" Click="Menu_Refresh">
                         <MenuItem.Icon>
                             <materialDesign:PackIcon Kind="Refresh" Width="16" Height="16"/>
                         </MenuItem.Icon>

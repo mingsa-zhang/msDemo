@@ -100,8 +100,12 @@ public partial class DbTreeControl : UserControl
         if (FindAncestorTreeViewItem(e.OriginalSource as DependencyObject) != item) return;
         if (item.DataContext is not DbTreeNodeViewModel node) return;
 
-        HandleDoubleClick(node);
-        e.Handled = true;
+        // 只有我们自己确实处理了这次双击才标记 Handled；像"字段/索引/外键/存储过程"等
+        // 没有专属双击动作的叶子节点要让事件原样放行，避免误吞掉后续可能的默认行为。
+        if (HandleDoubleClick(node))
+        {
+            e.Handled = true;
+        }
     }
 
     private static TreeViewItem? FindAncestorTreeViewItem(DependencyObject? source)
@@ -113,25 +117,25 @@ public partial class DbTreeControl : UserControl
         return source as TreeViewItem;
     }
 
-    private void HandleDoubleClick(DbTreeNodeViewModel node)
+    /// <summary>
+    /// 处理树节点双击；返回是否真的处理了（决定要不要在 Preview 阶段拦下事件）。
+    /// </summary>
+    private bool HandleDoubleClick(DbTreeNodeViewModel node)
     {
         switch (node.NodeType)
         {
             case TreeNodeType.Table:
             case TreeNodeType.View:
                 ViewModel?.RequestOpenDataBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "", node.SchemaName);
-                break;
+                return true;
+
             case TreeNodeType.Collection:
                 // MongoDB 集合：打开文档浏览
                 ViewModel?.RequestOpenMongoBrowser(node.ConnectionId, node.DatabaseName ?? "", node.ObjectName ?? "");
-                break;
-            case TreeNodeType.Database:
-                // 展开/折叠看下级对象（表/Schema 等）。这里已经在 Preview 阶段拦下了原生双击展开，
-                // 所以要靠自己手动切换；不会再和原生逻辑重复触发。
-                node.IsExpanded = !node.IsExpanded;
-                break;
+                return true;
+
             case TreeNodeType.Connection:
-                // Redis 连接：双击打开键浏览器；其余手动切换展开/折叠（理由同上）
+                // Redis 连接：双击打开键浏览器；其余展开/折叠
                 if (node.DbType == DbManager.Core.Enums.DbTypeEnum.Redis)
                 {
                     ViewModel?.RequestOpenRedisBrowser(node.ConnectionId);
@@ -140,7 +144,27 @@ public partial class DbTreeControl : UserControl
                 {
                     node.IsExpanded = !node.IsExpanded;
                 }
-                break;
+                return true;
+
+            case TreeNodeType.Database:
+            case TreeNodeType.Schema:
+            case TreeNodeType.Group:
+            case TreeNodeType.TableGroup:
+            case TreeNodeType.ViewGroup:
+            case TreeNodeType.ProcedureGroup:
+            case TreeNodeType.FunctionGroup:
+            case TreeNodeType.ColumnGroup:
+            case TreeNodeType.IndexGroup:
+            case TreeNodeType.ForeignKeyGroup:
+                // 所有"容器/文件夹"类节点统一双击展开/折叠。这里已经在 Preview 阶段拦下了原生双击展开，
+                // 所以要靠自己手动切换；不会再和原生逻辑重复触发。
+                node.IsExpanded = !node.IsExpanded;
+                return true;
+
+            default:
+                // 字段/存储过程/函数/索引/外键等叶子节点没有可展开的内容，双击不做任何事，
+                // 也不要拦截事件（保持之前"没处理就不吞事件"的语义）。
+                return false;
         }
     }
 

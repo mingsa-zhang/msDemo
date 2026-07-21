@@ -213,11 +213,37 @@
                 </Style.Triggers>
             </Style>
 
-            <!-- MenuItem全局样式 -->
+            <!-- MenuItem全局样式 - Navicat风格扁平菜单项(圆角高亮、图标/文字/快捷键三栏对齐) -->
             <Style TargetType="MenuItem">
                 <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Padding" Value="10,5"/>
                 <Setter Property="Foreground" Value="#333"/>
+                <Setter Property="Padding" Value="8,6"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="4" Margin="2,1" SnapsToDevicePixels="True">
+                                <Grid Margin="{TemplateBinding Padding}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="22"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Grid.Column="0" ContentSource="Icon" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                    <ContentPresenter Grid.Column="1" ContentSource="Header" VerticalAlignment="Center" Margin="8,0,16,0" RecognizesAccessKey="True"/>
+                                    <TextBlock Grid.Column="2" Text="{TemplateBinding InputGestureText}" Foreground="#999" FontSize="11" VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="#E3F2FD"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Foreground" Value="#BBB"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <!-- Menu全局样式 -->
@@ -225,6 +251,31 @@
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Foreground" Value="#333"/>
                 <Setter Property="Background" Value="#F0F0F0"/>
+            </Style>
+
+            <!-- ContextMenu全局样式 - Navicat风格圆角浮层+柔和阴影 -->
+            <Style TargetType="ContextMenu">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="#D8D8D8"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="3"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ContextMenu">
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Padding="{TemplateBinding Padding}"
+                                    CornerRadius="6"
+                                    SnapsToDevicePixels="True">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="14" ShadowDepth="2" Direction="270" Opacity="0.22" Color="#000000"/>
+                                </Border.Effect>
+                                <StackPanel IsItemsHost="True" ClipToBounds="True"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <!-- ScrollBar全局样式 - 紧凑 -->
