@@ -138,8 +138,6 @@
                   AutoGenerateColumns="True"
                   AutoGeneratingColumn="DataGrid_AutoGeneratingColumn"
                   CanUserAddRows="False"
-                  RowHeaderWidth="42"
-                  LoadingRow="DataGrid_LoadingRow"
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"/>
 

@@ -48,14 +48,6 @@ public partial class DataBrowserView : UserControl
     }
 
     /// <summary>
-    /// 行号：把 1 基序号写入行头。
-    /// </summary>
-    private void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
-    {
-        e.Row.Header = (e.Row.GetIndex() + 1).ToString();
-    }
-
-    /// <summary>
     /// 自动生成列时替换为模板列：显示模板对 NULL 呈现灰色斜体 "(NULL)"，
     /// 编辑模板仍绑定真实值（不经转换器），保证编辑无副作用。
     /// </summary>
