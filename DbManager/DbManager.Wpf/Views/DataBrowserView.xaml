@@ -141,31 +141,48 @@
                   VirtualizingPanel.IsVirtualizing="True"
                   VirtualizingPanel.VirtualizationMode="Recycling"/>
 
-        <!-- 底部分页 -->
+        <!-- 底部分页：第一行单独整行显示本次实际执行的查询 SQL，第二行是状态文字/分页 -->
         <Border Grid.Row="2" Background="#F0F0F0" BorderBrush="#DCDCDC" BorderThickness="0,1,0,0" Padding="8,3">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" FontSize="11"
-                           VerticalAlignment="Center" Foreground="#666"/>
-
-                <!-- 分页按钮 -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button ToolTip="上一页" Command="{Binding PreviousPageCommand}" Padding="4,2" Margin="1,0"
-                            Style="{StaticResource ToolBarButton}">
-                        <materialDesign:PackIcon Kind="ChevronLeft" Width="14" Height="14"/>
-                    </Button>
-                    <TextBlock Text="{Binding PageInfo}" FontSize="11" VerticalAlignment="Center"
-                               Margin="6,0" Foreground="#666"/>
-                    <Button ToolTip="下一页" Command="{Binding NextPageCommand}" Padding="4,2" Margin="1,0"
-                            Style="{StaticResource ToolBarButton}">
-                        <materialDesign:PackIcon Kind="ChevronRight" Width="14" Height="14"/>
-                    </Button>
+                <!-- 本次实际执行的查询 SQL：独占一整行，超长省略号截断，悬停看完整内容 -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,3"
+                            ToolTip="{Binding LastExecutedSql}">
+                    <materialDesign:PackIcon Kind="CodeTags" Width="13" Height="13"
+                                             VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
+                    <TextBlock Text="{Binding LastExecutedSql}" FontSize="11" FontFamily="Consolas"
+                               VerticalAlignment="Center" Foreground="#888"
+                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                 </StackPanel>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" FontSize="11"
+                               VerticalAlignment="Center" Foreground="#666"/>
+
+                    <!-- 分页按钮：PageInfo 含"第X/Y页(共Z条，本页N条)" -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button ToolTip="上一页" Command="{Binding PreviousPageCommand}" Padding="4,2" Margin="1,0"
+                                Style="{StaticResource ToolBarButton}">
+                            <materialDesign:PackIcon Kind="ChevronLeft" Width="14" Height="14"/>
+                        </Button>
+                        <TextBlock Text="{Binding PageInfo}" FontSize="11" VerticalAlignment="Center"
+                                   Margin="6,0" Foreground="#666"/>
+                        <Button ToolTip="下一页" Command="{Binding NextPageCommand}" Padding="4,2" Margin="1,0"
+                                Style="{StaticResource ToolBarButton}">
+                            <materialDesign:PackIcon Kind="ChevronRight" Width="14" Height="14"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

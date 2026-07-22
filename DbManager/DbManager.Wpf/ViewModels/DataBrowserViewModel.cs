@@ -47,6 +47,10 @@ public partial class DataBrowserViewModel : ObservableObject
     [ObservableProperty] private string _filterText = string.Empty;
     [ObservableProperty] private bool _isEditing;
     [ObservableProperty] private int _selectedRowCount;
+    /// <summary>
+    /// 本次实际执行的查询 SQL（含分页/筛选后的完整语句），供底部状态栏展示。
+    /// </summary>
+    [ObservableProperty] private string _lastExecutedSql = string.Empty;
 
     public string TableName => _tableName;
     public DataTable? SourceTable => DataView?.Table;
@@ -58,7 +62,7 @@ public partial class DataBrowserViewModel : ObservableObject
 
     public bool HasPreviousPage => PageIndex > 1;
     public bool HasNextPage => PageIndex < TotalPages;
-    public string PageInfo => TotalPages > 0 ? $"第 {PageIndex}/{TotalPages} 页 (共 {TotalCount} 条)" : "无数据";
+    public string PageInfo => TotalPages > 0 ? $"第 {PageIndex}/{TotalPages} 页 (共 {TotalCount} 条，本页 {DataView?.Count ?? 0} 条)" : "无数据";
 
     public DataBrowserViewModel(DbConnectionModel connection, string databaseName, string tableName, string? schema = null)
     {
@@ -180,7 +184,9 @@ public partial class DataBrowserViewModel : ObservableObject
             }
             TotalPages = TotalCount > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
 
-            var result = await _executeService.ExecuteQueryAsync(connectionString, BuildQuerySql());
+            var querySql = BuildQuerySql();
+            LastExecutedSql = querySql;
+            var result = await _executeService.ExecuteQueryAsync(connectionString, querySql);
             if (result.IsSuccess && result.ResultSets.Count > 0 && result.ResultSets[0].Rows.Count > 0)
             {
                 var table = ConvertToDataTable(result.ResultSets[0]);
