@@ -47,6 +47,18 @@ public partial class MainWindowViewModel : ObservableObject
         ConnectionCount = conns.Count;
     }
 
+    /// <summary>
+    /// 标签内容常驻渲染（见 MainWindow.xaml 的 ItemsControl + IsSelected 显隐），
+    /// 这里只是同步"哪个标签当前应该可见"，不涉及任何数据重新加载。
+    /// </summary>
+    partial void OnSelectedTabChanged(TabItemViewModel? value)
+    {
+        foreach (var tab in Tabs)
+        {
+            tab.IsSelected = tab == value;
+        }
+    }
+
     #region 标签页管理
 
     public async Task OpenSqlQueryAsync(int connectionId, string databaseName)
@@ -310,10 +322,16 @@ public enum TabContentType
     RedisBrowser
 }
 
-public class TabItemViewModel : ObservableObject
+public partial class TabItemViewModel : ObservableObject
 {
     public string Header { get; set; } = "";
     public string IconKind { get; set; } = "FileDocument";
     public TabContentType ContentType { get; set; }
     public object Content { get; set; } = null!;
+
+    /// <summary>
+    /// 是否为当前选中标签。标签内容常驻渲染、切换只改 Visibility（见 MainWindow.xaml），
+    /// 靠这个属性驱动显隐，避免每次切标签都重建整个视图（大表格重新生成列/行很慢）。
+    /// </summary>
+    [ObservableProperty] private bool _isSelected;
 }

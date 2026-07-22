@@ -168,6 +168,10 @@
 
             <!-- 右侧工作区 -->
             <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
                 <Grid.Resources>
                     <DataTemplate DataType="{x:Type viewmodels:SqlQueryTabViewModel}">
                         <views:SqlQueryView/>
@@ -186,13 +190,11 @@
                     </DataTemplate>
                 </Grid.Resources>
 
-                <!-- 标签页工作区 -->
-                <TabControl ItemsSource="{Binding Tabs}"
-                            SelectedItem="{Binding SelectedTab}"
-                            FontSize="11"
-                            Background="White">
-                    <TabControl.Style>
-                        <Style TargetType="TabControl">
+                <!-- 标签头：只负责表头/选中，不再直接承载内容——内容常驻渲染在下面的 ItemsControl 里，
+                     切标签只是切 Visibility，不会每次都重新生成表格（大表格切标签会很卡）。 -->
+                <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#DCDCDC" BorderThickness="0,0,0,1">
+                    <Border.Style>
+                        <Style TargetType="Border">
                             <Setter Property="Visibility" Value="Visible"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Tabs.Count}" Value="0">
@@ -200,98 +202,127 @@
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </TabControl.Style>
-                    <TabControl.ItemTemplate>
-                        <DataTemplate>
-                            <DockPanel Margin="0,0,-1,0" ContextMenu="{StaticResource TabContextMenu}">
-                                <Button DockPanel.Dock="Right" ToolTip="关闭标签"
-                                        Click="CloseTab_Click" Padding="0" Margin="4,0,2,0"
-                                        Width="16" Height="16" FontSize="8" Cursor="Hand"
-                                        Background="Transparent" BorderThickness="0">
-                                    <materialDesign:PackIcon Kind="Close" Width="10" Height="10" Foreground="#999"/>
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}" CornerRadius="2" Padding="2">
-                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <ControlTemplate.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#E0E0E0"/>
-                                                            </Trigger>
-                                                        </ControlTemplate.Triggers>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=IsMouseOver}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=IsSelected}" Value="True">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <materialDesign:PackIcon Kind="{Binding IconKind, Converter={StaticResource StringToPackIconKindConverter}}" Width="14" Height="14"
-                                                         VerticalAlignment="Center" Margin="0,0,5,0"
-                                                         Foreground="#888"/>
-                                <TextBlock Text="{Binding Header}" VerticalAlignment="Center" FontSize="11.5"
-                                           Margin="0,0,2,0" MaxWidth="160" TextTrimming="CharacterEllipsis"/>
-                            </DockPanel>
-                        </DataTemplate>
-                    </TabControl.ItemTemplate>
-                    <TabControl.ContentTemplate>
-                        <DataTemplate>
-                            <ContentControl Content="{Binding Content}"/>
-                        </DataTemplate>
-                    </TabControl.ContentTemplate>
-                </TabControl>
+                    </Border.Style>
+                    <TabControl ItemsSource="{Binding Tabs}"
+                                SelectedItem="{Binding SelectedTab}"
+                                FontSize="11"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="6,4,6,0">
+                        <TabControl.Template>
+                            <ControlTemplate TargetType="TabControl">
+                                <TabPanel IsItemsHost="True" Background="{TemplateBinding Background}"
+                                          Margin="{TemplateBinding Padding}"/>
+                            </ControlTemplate>
+                        </TabControl.Template>
+                        <TabControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,-1,0" ContextMenu="{StaticResource TabContextMenu}">
+                                    <Button DockPanel.Dock="Right" ToolTip="关闭标签"
+                                            Click="CloseTab_Click" Padding="0" Margin="6,0,2,0"
+                                            Width="16" Height="16" FontSize="8" Cursor="Hand"
+                                            Background="Transparent" BorderThickness="0">
+                                        <materialDesign:PackIcon Kind="Close" Width="10" Height="10" Foreground="#999"/>
+                                        <Button.Style>
+                                            <Style TargetType="Button">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="2">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                            <ControlTemplate.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Background" Value="#D8D8D8"/>
+                                                                </Trigger>
+                                                            </ControlTemplate.Triggers>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=IsMouseOver}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=TabItem}, Path=IsSelected}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                    <materialDesign:PackIcon Kind="{Binding IconKind, Converter={StaticResource StringToPackIconKindConverter}}" Width="14" Height="14"
+                                                             VerticalAlignment="Center" Margin="0,0,6,0"
+                                                             Foreground="#888"/>
+                                    <TextBlock Text="{Binding Header}" VerticalAlignment="Center" FontSize="11.5"
+                                               Margin="0,0,2,0" MaxWidth="160" TextTrimming="CharacterEllipsis"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </TabControl.ItemTemplate>
+                    </TabControl>
+                </Border>
 
-                <!-- 空白首页 -->
-                <Grid x:Name="EmptyHomePanel">
-                    <Grid.Style>
-                        <Style TargetType="Grid">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Tabs.Count}" Value="0">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Grid.Style>
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,80">
-                        <materialDesign:PackIcon Kind="Database" Width="72" Height="72"
-                                                 HorizontalAlignment="Center" Margin="0,0,0,20" Foreground="#BDBDBD"/>
-                        <TextBlock Text="DbManager" FontSize="26" FontWeight="Light"
-                                   HorizontalAlignment="Center" Margin="0,0,0,8" Foreground="#9E9E9E"/>
-                        <TextBlock Text="多数据库管理工具" FontSize="14"
-                                   HorizontalAlignment="Center" Margin="0,0,0,28" Foreground="#BDBDBD"/>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
-                            <Border Background="#E3F2FD" CornerRadius="6" Padding="16,8" Margin="0,0,12,0"
-                                    Cursor="Hand" MouseLeftButtonDown="Menu_NewConnection_Click"
-                                    BorderBrush="#BBDEFB" BorderThickness="1">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="Connection" Width="18" Height="18" VerticalAlignment="Center" Foreground="#1976D2" Margin="0,0,8,0"/>
-                                    <TextBlock Text="新建连接" FontSize="13" VerticalAlignment="Center" Foreground="#1976D2"/>
-                                </StackPanel>
-                            </Border>
-                            <Border Background="#E8F5E9" CornerRadius="6" Padding="16,8"
-                                    Cursor="Hand" MouseLeftButtonDown="Menu_NewQuery_Click"
-                                    BorderBrush="#C8E6C9" BorderThickness="1">
-                                <StackPanel Orientation="Horizontal">
-                                    <materialDesign:PackIcon Kind="SqlQuery" Width="18" Height="18" VerticalAlignment="Center" Foreground="#388E3C" Margin="0,0,8,0"/>
-                                    <TextBlock Text="新建查询" FontSize="13" VerticalAlignment="Center" Foreground="#388E3C"/>
-                                </StackPanel>
-                            </Border>
+                <!-- 标签内容：每个标签的视图只创建一次、常驻在内存里，切换只改 Visibility -->
+                <Grid Grid.Row="1">
+                    <ItemsControl ItemsSource="{Binding Tabs}" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Grid/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Visibility" Value="{Binding IsSelected, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ContentControl Content="{Binding Content}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 空白首页 -->
+                    <Grid x:Name="EmptyHomePanel">
+                        <Grid.Style>
+                            <Style TargetType="Grid">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Tabs.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Grid.Style>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,80">
+                            <materialDesign:PackIcon Kind="Database" Width="72" Height="72"
+                                                     HorizontalAlignment="Center" Margin="0,0,0,20" Foreground="#BDBDBD"/>
+                            <TextBlock Text="DbManager" FontSize="26" FontWeight="Light"
+                                       HorizontalAlignment="Center" Margin="0,0,0,8" Foreground="#9E9E9E"/>
+                            <TextBlock Text="多数据库管理工具" FontSize="14"
+                                       HorizontalAlignment="Center" Margin="0,0,0,28" Foreground="#BDBDBD"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                                <Border Background="#E3F2FD" CornerRadius="6" Padding="16,8" Margin="0,0,12,0"
+                                        Cursor="Hand" MouseLeftButtonDown="Menu_NewConnection_Click"
+                                        BorderBrush="#BBDEFB" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Connection" Width="18" Height="18" VerticalAlignment="Center" Foreground="#1976D2" Margin="0,0,8,0"/>
+                                        <TextBlock Text="新建连接" FontSize="13" VerticalAlignment="Center" Foreground="#1976D2"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#E8F5E9" CornerRadius="6" Padding="16,8"
+                                        Cursor="Hand" MouseLeftButtonDown="Menu_NewQuery_Click"
+                                        BorderBrush="#C8E6C9" BorderThickness="1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="SqlQuery" Width="18" Height="18" VerticalAlignment="Center" Foreground="#388E3C" Margin="0,0,8,0"/>
+                                        <TextBlock Text="新建查询" FontSize="13" VerticalAlignment="Center" Foreground="#388E3C"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Ctrl+N 新建连接  |  Ctrl+Q 新建查询  |  Ctrl+W 关闭标签  |  F5 执行查询"
+                                       FontSize="11" HorizontalAlignment="Center" Foreground="#BDBDBD"/>
                         </StackPanel>
-                        <TextBlock Text="Ctrl+N 新建连接  |  Ctrl+Q 新建查询  |  Ctrl+W 关闭标签  |  F5 执行查询"
-                                   FontSize="11" HorizontalAlignment="Center" Foreground="#BDBDBD"/>
-                    </StackPanel>
+                    </Grid>
                 </Grid>
             </Grid>
         </Grid>
