@@ -28,12 +28,26 @@ public partial class SqlQueryTabViewModel : ObservableObject, IAsyncDisposable
     [ObservableProperty] private bool _isExecuting;
     [ObservableProperty] private bool _autoCommit = true; // true=自动提交；false=手动事务
     [ObservableProperty] private long _executionTimeMs;
-    [ObservableProperty] private int _affectedRows;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RowCountText))]
+    private int _affectedRows;
     [ObservableProperty] private string _messageText = string.Empty;
     [ObservableProperty] private bool _isSuccess = true;
     [ObservableProperty] private DataView? _resultDataView;
-    [ObservableProperty] private ObservableCollection<QueryResultTab> _resultTabs = new();
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RowCountText))]
+    private ObservableCollection<QueryResultTab> _resultTabs = new();
+
+    /// <summary>
+    /// 底部状态栏行数文案：有结果集（SELECT 类）显示"返回 N 行"，否则（增删改）显示"影响 N 行"。
+    /// </summary>
+    public string RowCountText => ResultTabs.Count > 0 ? $"返回 {AffectedRows} 行" : $"影响 {AffectedRows} 行";
     [ObservableProperty] private string _currentFilePath = string.Empty;
+    /// <summary>
+    /// 本次实际执行的 SQL（"运行选中"时是选中片段；自动限行改写后是改写后的语句），
+    /// 供底部状态栏展示，方便确认到底跑的是哪条。
+    /// </summary>
+    [ObservableProperty] private string _lastExecutedSql = string.Empty;
 
     public DbConnectionModel Connection => _connection;
 
@@ -122,6 +136,7 @@ public partial class SqlQueryTabViewModel : ObservableObject, IAsyncDisposable
         {
             var connectionString = GetConnectionString();
             var limitedSql = ApplyRowLimit(sql);
+            LastExecutedSql = limitedSql;
             // 手动事务模式走会话（同一连接+事务），否则走无状态执行服务
             var result = _session is { IsActive: true }
                 ? await _session.ExecuteAsync(limitedSql, cancellationToken: _cts.Token)
@@ -324,6 +339,7 @@ public partial class SqlQueryTabViewModel : ObservableObject, IAsyncDisposable
         MessageText = string.Empty;
         AffectedRows = 0;
         ExecutionTimeMs = 0;
+        LastExecutedSql = string.Empty;
     }
 
     [RelayCommand]

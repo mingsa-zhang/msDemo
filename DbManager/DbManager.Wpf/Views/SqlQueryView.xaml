@@ -188,12 +188,21 @@
         <Border Grid.Row="4" Background="#F0F0F0" BorderBrush="#DCDCDC" BorderThickness="0,1,0,0" Padding="8,3">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <!-- 本次实际执行的 SQL（左下角，超长省略号截断，悬停看完整内容） -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,10,0"
+                            ToolTip="{Binding LastExecutedSql}">
+                    <materialDesign:PackIcon Kind="CodeTags" Width="13" Height="13"
+                                             VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
+                    <TextBlock Text="{Binding LastExecutedSql}" FontSize="11" FontFamily="Consolas"
+                               VerticalAlignment="Center" Foreground="#888"
+                               TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,10,0">
                     <materialDesign:PackIcon Kind="TimerOutline" Width="13" Height="13"
                                              VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
                     <TextBlock Text="{Binding ExecutionTimeMs, StringFormat='{}{0} ms'}" FontSize="11"
@@ -202,7 +211,7 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
                     <materialDesign:PackIcon Kind="TableRow" Width="13" Height="13"
                                              VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
-                    <TextBlock Text="{Binding AffectedRows, StringFormat='{}{0} 行受影响'}" FontSize="11"
+                    <TextBlock Text="{Binding RowCountText}" FontSize="11"
                                VerticalAlignment="Center" Foreground="#888"/>
                 </StackPanel>
                 <StackPanel Grid.Column="3" Orientation="Horizontal">
