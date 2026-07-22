@@ -184,17 +184,17 @@
             </TabControl>
         </Grid>
 
-        <!-- 底部状态栏 -->
+        <!-- 底部状态栏：上面单独一行显示本次执行的 SQL（独占一行，不用跟耗时/行数/状态抢宽度），
+             下面一行是耗时/行数/就绪状态 -->
         <Border Grid.Row="4" Background="#F0F0F0" BorderBrush="#DCDCDC" BorderThickness="0,1,0,0" Padding="8,3">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <!-- 本次实际执行的 SQL（左下角，超长省略号截断，悬停看完整内容） -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,10,0"
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 本次实际执行的 SQL：独占一整行，超长省略号截断，悬停看完整内容 -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,3"
                             ToolTip="{Binding LastExecutedSql}">
                     <materialDesign:PackIcon Kind="CodeTags" Width="13" Height="13"
                                              VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
@@ -202,44 +202,53 @@
                                VerticalAlignment="Center" Foreground="#888"
                                TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,10,0">
-                    <materialDesign:PackIcon Kind="TimerOutline" Width="13" Height="13"
-                                             VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
-                    <TextBlock Text="{Binding ExecutionTimeMs, StringFormat='{}{0} ms'}" FontSize="11"
-                               VerticalAlignment="Center" Foreground="#888"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
-                    <materialDesign:PackIcon Kind="TableRow" Width="13" Height="13"
-                                             VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
-                    <TextBlock Text="{Binding RowCountText}" FontSize="11"
-                               VerticalAlignment="Center" Foreground="#888"/>
-                </StackPanel>
-                <StackPanel Grid.Column="3" Orientation="Horizontal">
-                    <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,4,0">
-                        <Ellipse.Style>
-                            <Style TargetType="Ellipse">
-                                <Setter Property="Fill" Value="#4CAF50"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsExecuting}" Value="True">
-                                        <Setter Property="Fill" Value="#FF9800"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Ellipse.Style>
-                    </Ellipse>
-                    <TextBlock FontSize="11" VerticalAlignment="Center" Foreground="#888">
-                        <TextBlock.Style>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="Text" Value="就绪"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsExecuting}" Value="True">
-                                        <Setter Property="Text" Value="执行中..."/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </StackPanel>
+
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="TimerOutline" Width="13" Height="13"
+                                                 VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
+                        <TextBlock Text="{Binding ExecutionTimeMs, StringFormat='{}{0} ms'}" FontSize="11"
+                                   VerticalAlignment="Center" Foreground="#888"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="0,0,10,0">
+                        <materialDesign:PackIcon Kind="TableRow" Width="13" Height="13"
+                                                 VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#999"/>
+                        <TextBlock Text="{Binding RowCountText}" FontSize="11"
+                                   VerticalAlignment="Center" Foreground="#888"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                        <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,4,0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="#4CAF50"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsExecuting}" Value="True">
+                                            <Setter Property="Fill" Value="#FF9800"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock FontSize="11" VerticalAlignment="Center" Foreground="#888">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="就绪"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsExecuting}" Value="True">
+                                            <Setter Property="Text" Value="执行中..."/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
     </Grid>
